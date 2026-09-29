@@ -1,0 +1,150 @@
+# StudyAgent
+
+面向个人职业学习和考试备考的 AI 自适应学习陪练平台。
+
+当前仓库已完成 P0～P8：工程与数据基础、资料解析与双索引、题库生成 RAG、客观题学习闭环、自适应选题、LangChain 引用讲解、Redis 可恢复运行态、Vue 前端闭环、生产部署方案，以及外部 Embedding 与真实模型评测收尾。
+
+P9 增加了 GitHub Actions 干净环境验证和全面真实链路验收，覆盖错误契约、资料去重、重建索引、题库审核、幂等作答与归档保护。
+
+## 技术栈
+
+- 后端：Python 3.12、FastAPI、SQLAlchemy、Alembic、Celery、LangChain。
+- 前端：Vue 3、TypeScript、Vite、Pinia、Element Plus。
+- 数据：PostgreSQL、Milvus、Redis、S3 兼容对象存储（本地使用 RustFS）。
+- 部署：Docker Compose。
+
+## 目录
+
+```text
+apps/api/       FastAPI、Worker、数据库迁移和测试
+apps/web/       Vue 3 前端
+docs/           中文技术、接口和部署文档
+infra/          后续基础设施配置
+scripts/        本地开发脚本
+data/           本地运行数据目录
+compose.yaml    开发环境服务编排
+```
+
+## 快速开始
+
+### Docker Compose
+
+```powershell
+Copy-Item .env.example .env
+docker compose up --build
+```
+
+启动后：
+
+- Web：<http://localhost:55173>
+- API 文档：<http://localhost:58000/docs>
+- API 存活检查：<http://localhost:58000/api/health/live>
+- 对象存储控制台：<http://localhost:59001>
+- Milvus：`localhost:59530`
+- PostgreSQL：`localhost:55432`
+- Redis：`localhost:56379`
+
+也可以执行：
+
+```powershell
+.\scripts\dev.ps1
+```
+
+### 分别运行
+
+后端：
+
+```powershell
+Set-Location apps/api
+python -m venv .venv
+.\.venv\Scripts\Activate.ps1
+python -m pip install -e ".[dev]"
+uvicorn study_agent.main:app --reload
+```
+
+前端：
+
+```powershell
+Set-Location apps/web
+npm.cmd install
+npm.cmd run dev
+```
+
+## 当前可用能力
+
+- FastAPI 应用与 OpenAPI。
+- `/api/health/live` 和 `/api/health/ready`。
+- 知识库创建、列表、详情和归档更新接口。
+- 资料上传、哈希去重、列表、详情、删除和处理任务查询接口。
+- PostgreSQL 初始迁移、Repository、Unit of Work 和统一错误响应。
+- S3 协议对象存储适配器与本地文件存储替代实现；Compose 本地环境使用 RustFS。
+- PDF、DOCX、PPTX、TXT、Markdown、XLSX 解析与 LangChain `Document` 标准化。
+- LangChain 文本切块、Celery Chain 异步处理、失败重试和任务进度。
+- Milvus 原文向量索引，以及按知识库和资料过滤的检索接口。
+- LangChain 知识点抽取与单选、填空、判断题生成链，包含来源校验和题目质量门禁。
+- 题库生成异步任务、草稿查询、编辑、启用、停用和 Milvus 题库索引。
+- 单选、填空、判断题的确定性判分，以及会话恢复、幂等提交、掌握度和复习任务。
+- 基于薄弱度、复习到期、历史新鲜度、难度和题型多样性的可解释自适应选题。
+- LangChain 原文引用讲解、失败降级和讲解结果持久化。
+- Redis 学习运行态 checkpoint；缓存丢失时从 PostgreSQL 自动重建。
+- Vue 首页、知识库与资料管理、题库审核、学习工作台、进度与复习页面。
+- 前端支持资料处理状态轮询、题目筛选/编辑/启停、三类客观题作答、判题讲解与来源展示。
+- 活动学习会话写入浏览器本地状态，并通过后端 PostgreSQL/Redis 恢复；刷新后可继续作答。
+- PostgreSQL、Milvus、Redis、RustFS、API、Worker 和 Web 的 Compose 编排。
+- 检索与题库确定性评测脚本、固定输入集和带配置元数据的 JSON 结果。
+- 百炼 `text-embedding-v4` 1024 维真实接入、资料重建索引接口，以及 10 条/批兼容处理。
+- 可重复的 P8 端到端验收脚本，覆盖上传、解析、检索、题库生成、启用、学习、掌握度和历史记录。
+- Element Plus 按需构建、独立生产 Web 镜像和不暴露基础组件端口的生产 Compose。
+
+## 评测
+
+```powershell
+.\apps\api\.venv\Scripts\python.exe .\scripts\评测基线.py retrieval `
+  --dataset .\evaluation\datasets\TCP检索基线-v1.jsonl `
+  --output .\evaluation\results\TCP检索基线.json
+```
+
+当前 3 条 TCP 小样本结果仅作为开发基线，不代表通用检索性能。完整说明见 [评测基线与结果](docs/技术方案/评测基线与结果.md)。
+
+P8 已增加 30 条人工标注查询的外部 `text-embedding-v4` 基线，以及 59 道真实生成题目的确定性审计。运行完整验收：
+
+```powershell
+.\apps\api\.venv\Scripts\python.exe .\scripts\P8端到端验收.py `
+  --knowledge-base-id <知识库ID> `
+  --generation-material-id <资料ID> `
+  --output .\evaluation\results\P8端到端验收.json
+```
+
+运行 P9 全面验收：
+
+```powershell
+.\apps\api\.venv\Scripts\python.exe .\scripts\P9全面验收.py `
+  --output .\evaluation\results\P9全面验收.json
+```
+
+该脚本会创建并归档一个独立验收知识库，真实验证上传、重复检测、解析、检索、重建索引、三类题目生成、题目修订、学习判分、错答讲解、幂等冲突、掌握度、复习和历史记录。
+
+## 干净环境验证
+
+GitHub Actions 会在全新 Ubuntu、Python 3.12 和 Node.js 22 环境中执行后端测试、覆盖率、Ruff、Mypy、`npm ci`、前端类型检查、生产构建、NPM 审计和 Compose 配置检查。
+
+Windows 本地可执行隔离验证，不依赖已有 `node_modules`：
+
+```powershell
+powershell.exe -NoProfile -ExecutionPolicy Bypass `
+  -File .\scripts\验证干净环境.ps1
+```
+
+只验证前端时添加 `-SkipBackendInstall`。
+
+## 生产构建
+
+```powershell
+docker compose -f compose.production.yaml up -d --build
+```
+
+公开部署前仍需补充认证、限流、上传安全和 HTTPS。详见 [生产部署与故障排查](docs/部署文档/生产部署与故障排查.md)。
+
+## 文档
+
+从 [文档索引](docs/文档索引.md) 开始阅读。接口和数据库变更必须同步更新对应文档。

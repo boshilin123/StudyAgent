@@ -1,0 +1,30 @@
+{"case_id":"tcp-reliable-01","knowledge_base_id":"d5737c62-e131-461b-9b9f-c602e59d6f0b","query":"TCP 为什么能够可靠传输数据？","relevant_chunk_ids":["e0aa81cf-ff3b-5a81-bcff-ed34129ff66b"]}
+{"case_id":"tcp-reliable-02","knowledge_base_id":"d5737c62-e131-461b-9b9f-c602e59d6f0b","query":"TCP 依靠哪些机制保证数据到达？","relevant_chunk_ids":["e0aa81cf-ff3b-5a81-bcff-ed34129ff66b"]}
+{"case_id":"tcp-reliable-03","knowledge_base_id":"d5737c62-e131-461b-9b9f-c602e59d6f0b","query":"序列号和确认应答在什么协议中用于可靠性？","relevant_chunk_ids":["e0aa81cf-ff3b-5a81-bcff-ed34129ff66b"]}
+{"case_id":"tcp-reliable-04","knowledge_base_id":"d5737c62-e131-461b-9b9f-c602e59d6f0b","query":"超时重传解决了 TCP 的什么问题？","relevant_chunk_ids":["e0aa81cf-ff3b-5a81-bcff-ed34129ff66b"]}
+{"case_id":"tcp-reliable-05","knowledge_base_id":"d5737c62-e131-461b-9b9f-c602e59d6f0b","query":"面向连接的可靠传输协议是什么？","relevant_chunk_ids":["e0aa81cf-ff3b-5a81-bcff-ed34129ff66b"]}
+{"case_id":"tcp-reliable-06","knowledge_base_id":"d5737c62-e131-461b-9b9f-c602e59d6f0b","query":"TCP 流量控制属于哪类可靠传输机制？","relevant_chunk_ids":["e0aa81cf-ff3b-5a81-bcff-ed34129ff66b"]}
+{"case_id":"tcp-reliable-07","knowledge_base_id":"d5737c62-e131-461b-9b9f-c602e59d6f0b","query":"如何避免 TCP 数据丢失后无人处理？","relevant_chunk_ids":["e0aa81cf-ff3b-5a81-bcff-ed34129ff66b"]}
+{"case_id":"tcp-reliable-08","knowledge_base_id":"d5737c62-e131-461b-9b9f-c602e59d6f0b","query":"确认应答与超时重传共同保障什么？","relevant_chunk_ids":["e0aa81cf-ff3b-5a81-bcff-ed34129ff66b"]}
+{"case_id":"tcp-reliable-09","knowledge_base_id":"d5737c62-e131-461b-9b9f-c602e59d6f0b","query":"TCP 的可靠到达能力由哪些组件提供？","relevant_chunk_ids":["e0aa81cf-ff3b-5a81-bcff-ed34129ff66b"]}
+{"case_id":"tcp-reliable-10","knowledge_base_id":"d5737c62-e131-461b-9b9f-c602e59d6f0b","query":"序列号、ACK、重传和流量控制的作用是什么？","relevant_chunk_ids":["e0aa81cf-ff3b-5a81-bcff-ed34129ff66b"]}
+{"case_id":"tcp-handshake-01","knowledge_base_id":"d5737c62-e131-461b-9b9f-c602e59d6f0b","query":"TCP 三次握手的完整顺序是什么？","relevant_chunk_ids":["bbe17ba4-b39d-5c60-a1ca-b6cd6d1fb0da"]}
+{"case_id":"tcp-handshake-02","knowledge_base_id":"d5737c62-e131-461b-9b9f-c602e59d6f0b","query":"客户端第一次建立连接时发送什么报文？","relevant_chunk_ids":["bbe17ba4-b39d-5c60-a1ca-b6cd6d1fb0da"]}
+{"case_id":"tcp-handshake-03","knowledge_base_id":"d5737c62-e131-461b-9b9f-c602e59d6f0b","query":"服务器在第二次握手中返回哪些标志？","relevant_chunk_ids":["bbe17ba4-b39d-5c60-a1ca-b6cd6d1fb0da"]}
+{"case_id":"tcp-handshake-04","knowledge_base_id":"d5737c62-e131-461b-9b9f-c602e59d6f0b","query":"第三次握手由谁发送 ACK？","relevant_chunk_ids":["bbe17ba4-b39d-5c60-a1ca-b6cd6d1fb0da"]}
+{"case_id":"tcp-handshake-05","knowledge_base_id":"d5737c62-e131-461b-9b9f-c602e59d6f0b","query":"SYN、SYN ACK、ACK 分别对应哪三个步骤？","relevant_chunk_ids":["bbe17ba4-b39d-5c60-a1ca-b6cd6d1fb0da"]}
+{"case_id":"tcp-handshake-06","knowledge_base_id":"d5737c62-e131-461b-9b9f-c602e59d6f0b","query":"TCP 连接在哪次握手之后建立？","relevant_chunk_ids":["bbe17ba4-b39d-5c60-a1ca-b6cd6d1fb0da"]}
+{"case_id":"tcp-handshake-07","knowledge_base_id":"d5737c62-e131-461b-9b9f-c602e59d6f0b","query":"发起 TCP 连接时客户端和服务端如何交互？","relevant_chunk_ids":["bbe17ba4-b39d-5c60-a1ca-b6cd6d1fb0da"]}
+{"case_id":"tcp-handshake-08","knowledge_base_id":"d5737c62-e131-461b-9b9f-c602e59d6f0b","query":"第二次握手为什么同时包含 SYN 和 ACK？","relevant_chunk_ids":["bbe17ba4-b39d-5c60-a1ca-b6cd6d1fb0da"]}
+{"case_id":"tcp-handshake-09","knowledge_base_id":"d5737c62-e131-461b-9b9f-c602e59d6f0b","query":"连接建立前最后一个报文是什么？","relevant_chunk_ids":["bbe17ba4-b39d-5c60-a1ca-b6cd6d1fb0da"]}
+{"case_id":"tcp-handshake-10","knowledge_base_id":"d5737c62-e131-461b-9b9f-c602e59d6f0b","query":"描述 TCP 建连阶段客户端发送的两个报文。","relevant_chunk_ids":["bbe17ba4-b39d-5c60-a1ca-b6cd6d1fb0da"]}
+{"case_id":"tcp-close-01","knowledge_base_id":"d5737c62-e131-461b-9b9f-c602e59d6f0b","query":"TCP 连接通常如何释放？","relevant_chunk_ids":["6447fa54-4df9-5b0e-84b2-77e99feb6407"]}
+{"case_id":"tcp-close-02","knowledge_base_id":"d5737c62-e131-461b-9b9f-c602e59d6f0b","query":"TCP 为什么采用四次挥手？","relevant_chunk_ids":["6447fa54-4df9-5b0e-84b2-77e99feb6407"]}
+{"case_id":"tcp-close-03","knowledge_base_id":"d5737c62-e131-461b-9b9f-c602e59d6f0b","query":"主动关闭方在释放连接时发送什么？","relevant_chunk_ids":["6447fa54-4df9-5b0e-84b2-77e99feb6407"]}
+{"case_id":"tcp-close-04","knowledge_base_id":"d5737c62-e131-461b-9b9f-c602e59d6f0b","query":"被动关闭方如何响应 FIN？","relevant_chunk_ids":["6447fa54-4df9-5b0e-84b2-77e99feb6407"]}
+{"case_id":"tcp-close-05","knowledge_base_id":"d5737c62-e131-461b-9b9f-c602e59d6f0b","query":"FIN 和 ACK 在连接终止阶段起什么作用？","relevant_chunk_ids":["6447fa54-4df9-5b0e-84b2-77e99feb6407"]}
+{"case_id":"tcp-close-06","knowledge_base_id":"d5737c62-e131-461b-9b9f-c602e59d6f0b","query":"两个方向的数据流为什么要独立关闭？","relevant_chunk_ids":["6447fa54-4df9-5b0e-84b2-77e99feb6407"]}
+{"case_id":"tcp-close-07","knowledge_base_id":"d5737c62-e131-461b-9b9f-c602e59d6f0b","query":"四次挥手涉及哪些关闭角色？","relevant_chunk_ids":["6447fa54-4df9-5b0e-84b2-77e99feb6407"]}
+{"case_id":"tcp-close-08","knowledge_base_id":"d5737c62-e131-461b-9b9f-c602e59d6f0b","query":"怎样结束 TCP 双向数据传输？","relevant_chunk_ids":["6447fa54-4df9-5b0e-84b2-77e99feb6407"]}
+{"case_id":"tcp-close-09","knowledge_base_id":"d5737c62-e131-461b-9b9f-c602e59d6f0b","query":"连接释放阶段由哪一方首先发出 FIN？","relevant_chunk_ids":["6447fa54-4df9-5b0e-84b2-77e99feb6407"]}
+{"case_id":"tcp-close-10","knowledge_base_id":"d5737c62-e131-461b-9b9f-c602e59d6f0b","query":"TCP 终止连接的报文交互方式是什么？","relevant_chunk_ids":["6447fa54-4df9-5b0e-84b2-77e99feb6407"]}

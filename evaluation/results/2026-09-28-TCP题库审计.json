@@ -1,0 +1,33 @@
+{
+  "evaluation_type": "question_bank",
+  "generated_at": "2026-09-28T04:14:52.212962+00:00",
+  "python": "3.12.0",
+  "embedding_provider": "local",
+  "embedding_model": "deterministic-local-v1",
+  "llm_model": "unknown",
+  "knowledge_base_id": "d5737c62-e131-461b-9b9f-c602e59d6f0b",
+  "base_url": "http://127.0.0.1:58000",
+  "metrics": {
+    "question_count": 3,
+    "schema_valid_rate": 1.0,
+    "source_traceable_rate": 1.0,
+    "exact_duplicate_rate": 0.0,
+    "type_distribution": {
+      "fill_blank": 1,
+      "single_choice": 1,
+      "true_false": 1
+    },
+    "status_distribution": {
+      "active": 3
+    }
+  },
+  "question_ids": [
+    "e32826e3-7fa9-413b-8357-7ebe228f9a97",
+    "faadcf55-63af-4430-9326-60be2b8806a6",
+    "6deffbd0-3396-47ae-83a6-0c1245080a40"
+  ],
+  "limitations": [
+    "结构合法率不等于人工审核通过率",
+    "来源可追溯率只验证来源关联存在，不自动判断引文是否充分支持答案"
+  ]
+}

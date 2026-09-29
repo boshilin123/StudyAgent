@@ -1,0 +1,4 @@
+{"case_id":"tcp-reliability","query":"TCP通过哪些机制保证可靠传输","knowledge_base_id":"d5737c62-e131-461b-9b9f-c602e59d6f0b","relevant_chunk_ids":["e0aa81cf-ff3b-5a81-bcff-ed34129ff66b"],"note":"人工标注：可靠传输机制片段"}
+{"case_id":"tcp-handshake","query":"TCP三次握手的过程","knowledge_base_id":"d5737c62-e131-461b-9b9f-c602e59d6f0b","relevant_chunk_ids":["bbe17ba4-b39d-5c60-a1ca-b6cd6d1fb0da"],"note":"人工标注：三次握手片段"}
+{"case_id":"tcp-close","query":"TCP连接怎样通过四次挥手关闭","knowledge_base_id":"d5737c62-e131-461b-9b9f-c602e59d6f0b","relevant_chunk_ids":["6447fa54-4df9-5b0e-84b2-77e99feb6407"],"note":"人工标注：四次挥手片段"}
+

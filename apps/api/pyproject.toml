@@ -1,0 +1,79 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "study-agent-api"
+version = "0.1.0"
+description = "StudyAgent personal adaptive learning API"
+requires-python = ">=3.12"
+dependencies = [
+  "alembic>=1.13,<2",
+  "asyncpg>=0.29,<1",
+  "celery[redis]>=5.4,<6",
+  "fastapi>=0.115,<1",
+  "httpx>=0.27,<1",
+  "langchain>=0.3,<1",
+  "langchain-community>=0.3,<1",
+  "langchain-milvus>=0.2,<1",
+  "langchain-openai>=0.3,<1",
+  "langchain-text-splitters>=0.3,<2",
+  "minio>=7.2,<8",
+  "openpyxl>=3.1,<4",
+  "pypdf>=5,<7",
+  "python-docx>=1.1,<2",
+  "python-pptx>=1.0,<2",
+  "pydantic-settings>=2.6,<3",
+  "python-multipart>=0.0.12,<1",
+  "redis>=5,<7",
+  "sqlalchemy[asyncio]>=2.0,<3",
+  "structlog>=24,<26",
+  "uvicorn[standard]>=0.32,<1",
+]
+
+[project.optional-dependencies]
+dev = [
+  "mypy>=1.13,<1.20",
+  "pytest>=8,<9",
+  "pytest-asyncio>=0.24,<1",
+  "pytest-cov>=6,<7",
+  "reportlab>=4,<5",
+  "ruff>=0.8,<1",
+]
+
+[tool.hatch.build.targets.wheel]
+packages = ["study_agent"]
+
+[tool.pytest.ini_options]
+addopts = "-q --strict-markers"
+asyncio_mode = "auto"
+testpaths = ["tests"]
+cache_dir = "../../tmp/pytest-cache"
+
+[tool.ruff]
+line-length = 100
+target-version = "py312"
+cache-dir = "../../tmp/ruff-cache"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B", "SIM"]
+
+[tool.ruff.lint.per-file-ignores]
+"migrations/versions/*.py" = ["E501"]
+
+[tool.mypy]
+python_version = "3.12"
+strict = true
+cache_dir = "../../tmp/mypy-cache"
+
+[[tool.mypy.overrides]]
+module = ["celery", "celery.*"]
+ignore_missing_imports = true
+
+[[tool.mypy.overrides]]
+module = ["pymilvus", "pymilvus.*", "openpyxl", "openpyxl.*"]
+ignore_missing_imports = true
+
+[[tool.mypy.overrides]]
+module = ["study_agent.ingestion.tasks", "study_agent.question_generation.tasks"]
+disable_error_code = ["misc", "untyped-decorator"]

@@ -1,0 +1,42 @@
+{
+  "evaluation_type": "p8_end_to_end",
+  "generated_at": "2026-09-28T07:41:56.957242+00:00",
+  "knowledge_base_id": "b8b6f31f-6648-48b5-b88a-cf8babc8a113",
+  "steps": {
+    "health": {
+      "status": "ok",
+      "dependencies": {
+        "application": "up"
+      }
+    },
+    "upload_and_retrieval": {
+      "status": "passed",
+      "ingestion_job_id": "5d69cc03-9681-4dce-a4e7-8482492b2405",
+      "top_score": 0.662455141544342
+    },
+    "question_generation": {
+      "status": "completed",
+      "job_id": "c90dc98a-ca4c-4ca4-b3bd-ba7d1d5339a8",
+      "generated_count": 3,
+      "rejected_count": 0
+    },
+    "question_activation": {
+      "status": "passed",
+      "active_question_count": 3
+    },
+    "study_loop": {
+      "status": "passed",
+      "session_id": "2bf78f8f-8d0e-4a53-bf35-9aa605bd54a9",
+      "answered_count": 3,
+      "correct_count": 3,
+      "total_score": 30.0
+    },
+    "progress": {
+      "status": "passed",
+      "mastery_count": 3,
+      "history_total": 1
+    }
+  },
+  "status": "passed",
+  "duration_ms": 28075.349
+}
