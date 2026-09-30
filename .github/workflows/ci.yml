@@ -5,6 +5,14 @@ on:
   pull_request:
 
 jobs:
+  windows-startup:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Windows PowerShell 5.1 launcher regression
+        shell: powershell
+        run: powershell.exe -NoProfile -ExecutionPolicy Bypass -File scripts/tests/Test-DevStartup.ps1
+
   backend:
     runs-on: ubuntu-latest
     services:

@@ -39,7 +39,7 @@ compose.yaml    开发环境服务编排
 
 ```powershell
 Copy-Item .env.example .env
-docker compose up --build
+docker compose up -d --wait --wait-timeout 180
 ```
 
 启动后：
@@ -64,10 +64,31 @@ Windows 任意目录的一行启动命令（先启动 Docker Desktop）：
 powershell.exe -NoProfile -ExecutionPolicy Bypass -File D:\Study\StudyAgent\scripts\dev.ps1
 ```
 
-启动后打开 <http://localhost:55173>。脚本会启动并构建全部开发服务，终端保持显示日志；首次运行会从 `.env.example` 创建 `.env`，真实模型功能需填写密钥。后台启动可使用：
+脚本默认后台启动全部开发服务，等待容器及 Web/API 就绪后自动打开浏览器；可以关闭终端，服务仍会运行。首次运行会从 `.env.example` 创建 `.env`，缺少镜像时自动构建，真实模型功能需填写密钥。页面端口取实际 Compose 配置（默认示例为 `55173`）。
+
+可选参数：`-NoBrowser` 不自动打开页面；`-FollowLogs` 仅跟踪 API、Worker 和 Web 日志；修改依赖或 Dockerfile 后使用 `-Rebuild` 重建镜像。直接用 Compose 后台启动则不会自动打开页面：
 
 ```powershell
 docker compose --project-directory D:\Study\StudyAgent up -d --build
+```
+
+Milvus 的 `INFO` 日志是后台同步、调度和数据维护信息，不代表启动失败。日常启动不再持续输出这些日志；排查时按需查看：
+
+```powershell
+docker compose --project-directory D:\Study\StudyAgent logs --tail 100 api worker web
+docker compose --project-directory D:\Study\StudyAgent logs --tail 100 milvus
+```
+
+停止服务但保留数据：
+
+```powershell
+docker compose --project-directory D:\Study\StudyAgent stop
+```
+
+启动脚本的 Windows PowerShell 5.1 回归：
+
+```powershell
+powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\tests\Test-DevStartup.ps1
 ```
 
 ### 分别运行
