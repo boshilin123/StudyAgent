@@ -59,6 +59,7 @@ async def _mark_failed(job_id: UUID, message: str) -> None:
                             AgentRunModel.agent_type == "question_generation",
                             AgentRunModel.subject_id == job.material_id,
                             AgentRunModel.status == "running",
+                            AgentRunModel.input_summary["job_id"].as_string() == str(job_id),
                         )
                     )
                 ).all()
@@ -88,18 +89,6 @@ class QuestionGenerationTask(Task):
         if args:
             asyncio.run(_mark_failed(UUID(str(args[0])), str(exc)))
         super().on_failure(exc, task_id, args, kwargs, einfo)
-
-    def on_retry(
-        self,
-        exc: BaseException,
-        task_id: str,
-        args: tuple[Any, ...],
-        kwargs: dict[str, Any],
-        einfo: Any,
-    ) -> None:
-        if args:
-            asyncio.run(_mark_failed(UUID(str(args[0])), f"任务重试：{exc}"))
-        super().on_retry(exc, task_id, args, kwargs, einfo)
 
 
 def _context(chunks: list[DocumentChunk], max_chars: int) -> str:
@@ -141,6 +130,26 @@ def generate_questions(job_id: str, material_id: str) -> dict[str, object]:
         material = await session.get(MaterialModel, material_uuid)
         if job is None or material is None:
             raise ValueError("question generation job or material does not exist")
+        if job.status in {"completed", "partial"}:
+            return {
+                "job_id": job_id,
+                "generated_count": job.generated_count,
+                "rejected_count": job.rejected_count,
+            }
+        # Close an interrupted attempt's trace without declaring the whole job
+        # failed (which would unblock another job while this one is retrying).
+        previous_runs = (
+            await session.scalars(
+                select(AgentRunModel).where(
+                    AgentRunModel.status == "running",
+                    AgentRunModel.input_summary["job_id"].as_string() == job_id,
+                )
+            )
+        ).all()
+        for previous in previous_runs:
+            previous.status = "failed"
+            previous.error_message = "此前尝试中断，任务正在重试"
+            previous.finished_at = datetime.now(UTC)
         settings = get_settings()
         job.status = "running"
         job.stage = "extracting_knowledge_points"

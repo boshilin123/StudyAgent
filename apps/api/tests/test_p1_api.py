@@ -1,4 +1,5 @@
 from collections.abc import Iterator
+from uuid import UUID
 
 import pytest
 from fastapi.testclient import TestClient
@@ -6,6 +7,7 @@ from fastapi.testclient import TestClient
 from study_agent.api.dependencies import (
     get_ingestion_dispatcher,
     get_object_storage,
+    get_question_vector_index,
     get_uow,
     get_vector_index,
 )
@@ -14,6 +16,7 @@ from tests.fakes import (
     FakeDocumentIndex,
     FakeIngestionDispatcher,
     FakeObjectStorage,
+    FakeQuestionIndex,
     FakeUnitOfWork,
 )
 
@@ -35,6 +38,7 @@ def api_context() -> Iterator[tuple[TestClient, FakeUnitOfWork, FakeObjectStorag
     app.dependency_overrides[get_object_storage] = override_storage
     app.dependency_overrides[get_ingestion_dispatcher] = lambda: dispatcher
     app.dependency_overrides[get_vector_index] = lambda: document_index
+    app.dependency_overrides[get_question_vector_index] = FakeQuestionIndex
     with TestClient(app) as client:
         yield client, uow, storage
     app.dependency_overrides.clear()
@@ -87,10 +91,8 @@ def test_knowledge_base_chinese_text_round_trip(
 def test_material_upload_duplicate_query_and_delete(
     api_context: tuple[TestClient, FakeUnitOfWork, FakeObjectStorage],
 ) -> None:
-    client, _, storage = api_context
-    knowledge_base = client.post(
-        "/api/knowledge-bases", json={"name": "计算机网络"}
-    ).json()
+    client, uow, storage = api_context
+    knowledge_base = client.post("/api/knowledge-bases", json={"name": "计算机网络"}).json()
     knowledge_base_id = knowledge_base["id"]
     files = {"file": ("notes.md", b"# TCP\nThree-way handshake", "text/markdown")}
 
@@ -117,6 +119,8 @@ def test_material_upload_duplicate_query_and_delete(
     assert client.get(f"/api/materials/{material_id}").status_code == 200
     assert client.get(f"/api/ingestion-jobs/{job_id}").status_code == 200
 
+    assert client.delete(f"/api/materials/{material_id}").status_code == 409
+    uow.ingestion_jobs.items[UUID(job_id)].status = "completed"
     delete_response = client.delete(f"/api/materials/{material_id}")
     assert delete_response.status_code == 204
     assert storage.objects == {}
@@ -125,15 +129,17 @@ def test_material_upload_duplicate_query_and_delete(
 def test_material_can_be_reprocessed(
     api_context: tuple[TestClient, FakeUnitOfWork, FakeObjectStorage],
 ) -> None:
-    client, _, _ = api_context
-    knowledge_base_id = client.post(
-        "/api/knowledge-bases", json={"name": "重新索引测试"}
-    ).json()["id"]
+    client, uow, _ = api_context
+    knowledge_base_id = client.post("/api/knowledge-bases", json={"name": "重新索引测试"}).json()[
+        "id"
+    ]
     upload = client.post(
         f"/api/knowledge-bases/{knowledge_base_id}/materials",
         files={"file": ("notes.md", b"# TCP\nThree-way handshake", "text/markdown")},
     ).json()
 
+    assert client.post(f"/api/materials/{upload['material']['id']}/reprocess").status_code == 409
+    uow.ingestion_jobs.items[UUID(upload["job"]["id"])].status = "completed"
     response = client.post(f"/api/materials/{upload['material']['id']}/reprocess")
 
     assert response.status_code == 202
@@ -146,9 +152,7 @@ def test_upload_rejects_unsupported_file(
     api_context: tuple[TestClient, FakeUnitOfWork, FakeObjectStorage],
 ) -> None:
     client, _, _ = api_context
-    knowledge_base_id = client.post(
-        "/api/knowledge-bases", json={"name": "测试"}
-    ).json()["id"]
+    knowledge_base_id = client.post("/api/knowledge-bases", json={"name": "测试"}).json()["id"]
     response = client.post(
         f"/api/knowledge-bases/{knowledge_base_id}/materials",
         files={"file": ("malware.exe", b"invalid", "application/octet-stream")},
@@ -162,9 +166,7 @@ def test_upload_rejects_mismatched_media_type(
     api_context: tuple[TestClient, FakeUnitOfWork, FakeObjectStorage],
 ) -> None:
     client, _, _ = api_context
-    knowledge_base_id = client.post(
-        "/api/knowledge-bases", json={"name": "MIME 校验"}
-    ).json()["id"]
+    knowledge_base_id = client.post("/api/knowledge-bases", json={"name": "MIME 校验"}).json()["id"]
     response = client.post(
         f"/api/knowledge-bases/{knowledge_base_id}/materials",
         files={"file": ("notes.pdf", b"not a real pdf", "text/plain")},

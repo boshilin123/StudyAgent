@@ -1,5 +1,13 @@
 # StudyAgent
 
+## P10 可靠性加固
+
+已修复填空语义符号丢失、任务派发失败阻塞、并发提交与知识点统计竞争、资料来源失效及旧向量残留。
+新增真实依赖就绪检查、Worker 健康检查、后端精确依赖锁、PostgreSQL 并发回归和浏览器端到端测试。
+详细验证与复现命令见 [P10 可靠性加固与回归验证](docs/技术方案/P10可靠性加固与回归验证.md)。
+
+开发端口默认仅绑定本机。生产部署必须设置 32 位以上 URL-safe `API_ACCESS_TOKEN`；前端右上角“访问令牌”可录入，公网部署还需 HTTPS 反向代理。
+
 面向个人职业学习和考试备考的 AI 自适应学习陪练平台。
 
 当前仓库已完成 P0～P8：工程与数据基础、资料解析与双索引、题库生成 RAG、客观题学习闭环、自适应选题、LangChain 引用讲解、Redis 可恢复运行态、Vue 前端闭环、生产部署方案，以及外部 Embedding 与真实模型评测收尾。
@@ -50,6 +58,18 @@ docker compose up --build
 .\scripts\dev.ps1
 ```
 
+Windows 任意目录的一行启动命令（先启动 Docker Desktop）：
+
+```powershell
+powershell.exe -NoProfile -ExecutionPolicy Bypass -File D:\Study\StudyAgent\scripts\dev.ps1
+```
+
+启动后打开 <http://localhost:55173>。脚本会启动并构建全部开发服务，终端保持显示日志；首次运行会从 `.env.example` 创建 `.env`，真实模型功能需填写密钥。后台启动可使用：
+
+```powershell
+docker compose --project-directory D:\Study\StudyAgent up -d --build
+```
+
 ### 分别运行
 
 后端：
@@ -58,7 +78,8 @@ docker compose up --build
 Set-Location apps/api
 python -m venv .venv
 .\.venv\Scripts\Activate.ps1
-python -m pip install -e ".[dev]"
+python -m pip install -r requirements-dev.lock
+python -m pip install --no-deps -e .
 uvicorn study_agent.main:app --reload
 ```
 
@@ -66,7 +87,7 @@ uvicorn study_agent.main:app --reload
 
 ```powershell
 Set-Location apps/web
-npm.cmd install
+npm.cmd ci
 npm.cmd run dev
 ```
 
@@ -143,7 +164,7 @@ powershell.exe -NoProfile -ExecutionPolicy Bypass `
 docker compose -f compose.production.yaml up -d --build
 ```
 
-公开部署前仍需补充认证、限流、上传安全和 HTTPS。详见 [生产部署与故障排查](docs/部署文档/生产部署与故障排查.md)。
+生产配置必须设置 `API_ACCESS_TOKEN`，否则编排与应用拒绝启动。已提供单用户 Bearer 令牌门禁，但不等于账号权限系统；公开部署前仍需限流、上传安全和 HTTPS。详见 [生产部署与故障排查](docs/部署文档/生产部署与故障排查.md)。
 
 ## 文档
 

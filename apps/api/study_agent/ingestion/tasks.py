@@ -14,10 +14,13 @@ from study_agent.infrastructure.models import (
     DocumentChunkModel,
     IngestionJobModel,
     MaterialModel,
+    QuestionModel,
 )
+from study_agent.infrastructure.repositories import SqlAlchemyQuestionRepository
 from study_agent.ingestion.chunking import build_chunks
 from study_agent.ingestion.factory import get_document_index
 from study_agent.ingestion.parsers import parse_document
+from study_agent.question_generation.factory import get_question_index
 from study_agent.worker import celery_app
 
 PARSER_VERSION = "p2-v1"
@@ -117,9 +120,22 @@ def parse_material(job_id: str, material_id: str) -> dict[str, str]:
                 )
             ).all()
         }
-        current_ids: set[UUID] = set()
+        current_ids = {chunk.id for chunk in chunks}
+        stale_ids = set(existing_models) - current_ids
+        orphaned = await SqlAlchemyQuestionRepository(session).invalidate_sources(list(stale_ids))
+        if orphaned:
+            await get_question_index().delete_questions([question.id for question in orphaned])
+            for question in orphaned:
+                model_question = await session.get(QuestionModel, question.id)
+                if model_question:
+                    model_question.vector_id = None
+        # Delete obsolete indexes first: new content may reuse a chunk_index.
+        if stale_ids:
+            await session.execute(
+                delete(DocumentChunkModel).where(DocumentChunkModel.id.in_(stale_ids))
+            )
+            await session.flush()
         for chunk in chunks:
-            current_ids.add(chunk.id)
             model = existing_models.get(chunk.id)
             if model is None:
                 session.add(
@@ -144,11 +160,6 @@ def parse_material(job_id: str, material_id: str) -> dict[str, str]:
             model.heading_path = chunk.heading_path
             model.content_hash = chunk.content_hash
 
-        stale_ids = set(existing_models) - current_ids
-        if stale_ids:
-            await session.execute(
-                delete(DocumentChunkModel).where(DocumentChunkModel.id.in_(stale_ids))
-            )
         job.stage = "chunking"
         job.progress = 60
         await session.commit()
@@ -201,6 +212,7 @@ def index_material(payload: dict[str, str]) -> dict[str, str]:
             knowledge_base_id=material.knowledge_base_id,
             chunks=chunks,
         )
+        await index.delete_stale_chunks(material_id, [chunk.id for chunk in chunks])
         for model, vector_id in zip(models, vector_ids, strict=True):
             model.vector_id = vector_id
             model.embedding_model = index.embedding_model

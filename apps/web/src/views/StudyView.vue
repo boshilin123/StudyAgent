@@ -2,6 +2,7 @@
 import { computed, onMounted, ref } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { ArrowRight, Clock, Close, RefreshRight } from '@element-plus/icons-vue'
+import { isAxiosError } from 'axios'
 
 import {
   apiErrorMessage,
@@ -21,6 +22,31 @@ import type {
 import { modeLabel, percentage, questionTypeLabel } from '@/utils/format'
 
 const STORAGE_KEY = 'study-agent-active-session'
+const PENDING_KEY = 'study-agent-pending-answer'
+type PendingAnswer = {
+  session_id: string
+  submission_id: string
+  question_id: string
+  answer: string | boolean
+  elapsed_seconds: number
+}
+
+function discardRejectedPending(error: unknown) {
+  if (isAxiosError(error) && [400, 404, 409, 422].includes(error.response?.status || 0)) {
+    // Only definitive rejection clears the ID; outages keep it for recovery.
+    localStorage.removeItem(PENDING_KEY)
+  }
+}
+
+function readPending(): PendingAnswer | null {
+  try {
+    const item = JSON.parse(localStorage.getItem(PENDING_KEY) || 'null') as PendingAnswer | null
+    return item?.submission_id && item.session_id && item.question_id ? item : null
+  } catch {
+    localStorage.removeItem(PENDING_KEY)
+    return null
+  }
+}
 const loading = ref(false)
 const submitting = ref(false)
 const bases = ref<KnowledgeBase[]>([])
@@ -71,6 +97,7 @@ async function startSession() {
     session.value = await createStudySession(form.value)
     localStorage.setItem(STORAGE_KEY, session.value.id)
     lastResult.value = null
+    localStorage.removeItem(PENDING_KEY)
     answer.value = ''
     questionStartedAt.value = Date.now()
   } catch (error) {
@@ -85,10 +112,20 @@ async function restoreSession(id: string) {
   try {
     const restored = await getStudySession(id)
     session.value = restored
-    if (restored.status !== 'active') localStorage.removeItem(STORAGE_KEY)
+    const pending = readPending()
+    if (pending?.session_id === id) {
+      // The server may have accepted a request whose response was lost. Replay
+      // its original ID before letting the user answer a different question.
+      const result = await submitAnswer(id, pending)
+      lastResult.value = result
+      session.value = result.session
+      localStorage.removeItem(PENDING_KEY)
+    }
+    if (session.value.status !== 'active') localStorage.removeItem(STORAGE_KEY)
     questionStartedAt.value = Date.now()
   } catch (error) {
-    localStorage.removeItem(STORAGE_KEY)
+    discardRejectedPending(error)
+    // Keep recovery information on a transient outage.
     ElMessage.warning(`上次会话无法恢复：${apiErrorMessage(error)}`)
   } finally {
     loading.value = false
@@ -101,21 +138,28 @@ function normalizedAnswer(): string | boolean {
 }
 
 async function sendAnswer() {
+  if (submitting.value) return
   if (!session.value || !currentQuestion.value || answer.value === '') {
     return ElMessage.warning('请先填写答案')
   }
   submitting.value = true
   try {
-    const result = await submitAnswer(session.value.id, {
+    const pending = readPending()
+    const payload: PendingAnswer = pending?.session_id === session.value.id ? pending : {
+      session_id: session.value.id,
       submission_id: crypto.randomUUID(),
       question_id: currentQuestion.value.id,
       answer: normalizedAnswer(),
       elapsed_seconds: Math.max(0, Math.round((Date.now() - questionStartedAt.value) / 1000)),
-    })
+    }
+    localStorage.setItem(PENDING_KEY, JSON.stringify(payload))
+    const result = await submitAnswer(session.value.id, payload)
+    localStorage.removeItem(PENDING_KEY)
     lastResult.value = result
     session.value = result.session
     if (result.session.status !== 'active') localStorage.removeItem(STORAGE_KEY)
   } catch (error) {
+    discardRejectedPending(error)
     ElMessage.error(apiErrorMessage(error))
   } finally {
     submitting.value = false
@@ -135,6 +179,7 @@ async function finish() {
       type: 'warning',
     })
     session.value = await finishStudySession(session.value.id)
+    localStorage.removeItem(PENDING_KEY)
     localStorage.removeItem(STORAGE_KEY)
   } catch (error) {
     if (error !== 'cancel') ElMessage.error(apiErrorMessage(error))
@@ -146,6 +191,7 @@ function resetWorkspace() {
   lastResult.value = null
   answer.value = ''
   localStorage.removeItem(STORAGE_KEY)
+  localStorage.removeItem(PENDING_KEY)
 }
 
 onMounted(async () => {

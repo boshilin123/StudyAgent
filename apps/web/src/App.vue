@@ -2,6 +2,7 @@
 import { Collection, DataAnalysis, HomeFilled, Reading } from '@element-plus/icons-vue'
 import { storeToRefs } from 'pinia'
 import { useRoute } from 'vue-router'
+import { ElMessageBox } from 'element-plus'
 
 import { useAppStore } from '@/stores/app'
 
@@ -16,6 +17,16 @@ const navItems = [
   { path: '/study', label: '学习工作台', icon: Reading },
   { path: '/progress', label: '学习进度', icon: DataAnalysis },
 ]
+
+async function configureAccessToken() {
+  try {
+    const { value } = await ElMessageBox.prompt('受保护部署需要访问令牌；本地未启用认证时可留空。',
+      '访问令牌', { inputType: 'password', inputValue: '', confirmButtonText: '保存' })
+    if (value?.trim()) sessionStorage.setItem('study-agent-access-token', value.trim())
+    else sessionStorage.removeItem('study-agent-access-token')
+    window.location.reload()
+  } catch { /* Cancel keeps the current token. */ }
+}
 </script>
 
 <template>
@@ -49,6 +60,7 @@ const navItems = [
           <h1>{{ route.meta.title }}</h1>
         </div>
         <span class="status-pill"><i /> 服务已连接</span>
+        <el-button text @click="configureAccessToken">访问令牌</el-button>
       </header>
       <RouterView />
     </main>

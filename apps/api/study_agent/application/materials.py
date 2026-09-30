@@ -1,4 +1,5 @@
 from collections.abc import Sequence
+from dataclasses import replace
 from datetime import UTC, datetime
 from uuid import UUID, uuid4
 
@@ -8,6 +9,7 @@ from study_agent.domain.ports import (
     DocumentIndex,
     IngestionDispatcher,
     ObjectStorage,
+    QuestionIndex,
     UnitOfWork,
 )
 
@@ -94,9 +96,12 @@ class MaterialService:
         dispatcher: IngestionDispatcher,
         material_id: UUID,
     ) -> IngestionJob:
+        await uow.lock(material_id)
         material = await self.get(uow, material_id)
         if await uow.ingestion_jobs.has_running_for_material(material_id):
             raise DomainError("MATERIAL_JOB_RUNNING", "资料仍有运行中的任务", status_code=409)
+        if await uow.question_generation_jobs.has_running_for_material(material_id):
+            raise DomainError("QUESTION_GENERATION_RUNNING", "资料仍在生成题目", status_code=409)
 
         now = datetime.now(UTC)
         job = IngestionJob(
@@ -113,6 +118,8 @@ class MaterialService:
         try:
             dispatcher.dispatch(job_id=job.id, material_id=material.id)
         except Exception as exc:
+            await uow.ingestion_jobs.fail_dispatch(job.id)
+            await uow.commit()
             raise DomainError(
                 "TASK_QUEUE_UNAVAILABLE", "资料重新处理任务提交失败", status_code=503
             ) from exc
@@ -143,18 +150,25 @@ class MaterialService:
         storage: ObjectStorage,
         document_index: DocumentIndex,
         material_id: UUID,
+        question_index: QuestionIndex,
     ) -> None:
+        await uow.lock(material_id)
         material = await self.get(uow, material_id)
         if await uow.ingestion_jobs.has_running_for_material(material_id):
             raise DomainError("MATERIAL_JOB_RUNNING", "资料仍有运行中的任务", status_code=409)
+        if await uow.question_generation_jobs.has_running_for_material(material_id):
+            raise DomainError("QUESTION_GENERATION_RUNNING", "资料仍在生成题目", status_code=409)
+        chunks = await uow.document_chunks.list_for_material(material_id)
+        orphaned = await uow.questions.invalidate_sources([chunk.id for chunk in chunks])
+        await question_index.delete_questions([question.id for question in orphaned])
+        for question in orphaned:
+            await uow.questions.update(replace(question, vector_id=None))
         await document_index.delete_material(material_id)
         await storage.delete(material.storage_uri)
         await uow.materials.delete(material_id)
         await uow.commit()
 
-    async def list_chunks(
-        self, uow: UnitOfWork, material_id: UUID
-    ) -> Sequence[DocumentChunk]:
+    async def list_chunks(self, uow: UnitOfWork, material_id: UUID) -> Sequence[DocumentChunk]:
         await self.get(uow, material_id)
         return await uow.document_chunks.list_for_material(material_id)
 

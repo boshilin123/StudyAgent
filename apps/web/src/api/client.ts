@@ -7,6 +7,8 @@ export const apiClient = axios.create({
 })
 
 apiClient.interceptors.request.use((config) => {
+  const token = sessionStorage.getItem('study-agent-access-token')
+  if (token) config.headers.Authorization = `Bearer ${token}`
   config.headers['X-Request-ID'] ??= crypto.randomUUID()
   return config
 })

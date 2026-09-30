@@ -95,18 +95,14 @@ def _answer_response(result: AnswerResult) -> AnswerResultResponse:
     )
 
 
-@router.post(
-    "/sessions", response_model=StudySessionResponse, status_code=status.HTTP_201_CREATED
-)
+@router.post("/sessions", response_model=StudySessionResponse, status_code=status.HTTP_201_CREATED)
 async def create_session(
     payload: StudySessionCreate,
     uow: UnitOfWorkDependency,
     state_store: StudyStateDependency,
 ) -> StudySessionResponse:
     if payload.difficulty_min > payload.difficulty_max:
-        raise DomainError(
-            "INVALID_DIFFICULTY_RANGE", "最低难度不能高于最高难度", status_code=422
-        )
+        raise DomainError("INVALID_DIFFICULTY_RANGE", "最低难度不能高于最高难度", status_code=422)
     view = await service.create_session(
         uow,
         knowledge_base_id=payload.knowledge_base_id,
@@ -182,8 +178,7 @@ async def list_mastery(
     uow: UnitOfWorkDependency, knowledge_base_id: UUID | None = None
 ) -> list[MasteryResponse]:
     return [
-        MasteryResponse.model_validate(item)
-        for item in await uow.mastery.list(knowledge_base_id)
+        MasteryResponse.model_validate(item) for item in await uow.mastery.list(knowledge_base_id)
     ]
 
 

@@ -1,0 +1,54 @@
+{
+  "evaluation_type": "p10_local_engineering_regression_summary",
+  "verification_date": "2026-09-30",
+  "scope": "local working tree, not remote CI",
+  "backend": {
+    "passed": 62,
+    "coverage_percent": 82.10702341137124,
+    "covered_statements": 2455,
+    "total_statements": 2990,
+    "ruff": "passed",
+    "mypy": "passed",
+    "mypy_source_files": 57,
+    "database": "isolated study_agent_test_p10"
+  },
+  "clean_backend": {
+    "passed": 62,
+    "locked_install": "passed",
+    "pip_check": "passed",
+    "migration": "passed",
+    "ruff": "passed",
+    "mypy": "passed",
+    "preserved_directory": "tmp/clean-environment-646ebd67ec564c44bb497af3bfe5ced9"
+  },
+  "latest_clean_frontend": {
+    "typecheck": "passed",
+    "production_build": "passed",
+    "browser_tests_passed": 8,
+    "browser_backend": "mock HTTP API; real Vue UI",
+    "backend_install_skipped_in_this_run": true,
+    "preserved_directory": "tmp/clean-environment-cef6435f756545899db759c41d77c695"
+  },
+  "runtime": {
+    "api_worker_linux_build": "passed",
+    "linux_pip_check": "passed",
+    "healthy_services": 8,
+    "ready_dependencies_up": ["postgresql", "redis", "broker", "milvus", "storage"],
+    "web_status_code": 200,
+    "compose_development_config": "passed",
+    "compose_production_config": "passed",
+    "live_acceptance_result": "2026-09-30-P10新镜像验收.json"
+  },
+  "npm_audit": {
+    "registry": "https://registry.npmjs.org",
+    "known_vulnerabilities": 0
+  },
+  "remote_ci": "not run in this turn",
+  "limitations": [
+    "No durable outbox or distributed transaction across database, broker and external storage",
+    "No fixed-hardware load test",
+    "Historical human question-quality review remains pending",
+    "Public deployment still requires HTTPS, rate limiting, upload safety and appropriate ownership controls",
+    "Changes not committed or pushed in this turn"
+  ]
+}

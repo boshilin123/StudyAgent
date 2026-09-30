@@ -1,4 +1,6 @@
+from collections.abc import Sequence
 from typing import Any
+from uuid import UUID
 
 import anyio
 from langchain_core.embeddings import Embeddings
@@ -15,6 +17,17 @@ class MilvusQuestionIndex:
         self.collection_name = collection_name
         self.embeddings = embeddings
         self.embedding_model = embedding_model
+
+    async def delete_questions(self, question_ids: Sequence[UUID]) -> None:
+        if question_ids and await anyio.to_thread.run_sync(
+            self.client.has_collection, self.collection_name
+        ):
+            await anyio.to_thread.run_sync(
+                lambda: self.client.delete(
+                    collection_name=self.collection_name,
+                    ids=[str(question_id) for question_id in question_ids],
+                )
+            )
 
     def _ensure_collection(self, dimensions: int) -> None:
         if self.client.has_collection(self.collection_name):
@@ -53,8 +66,7 @@ class MilvusQuestionIndex:
         vectors = await anyio.to_thread.run_sync(self.embeddings.embed_documents, texts)
         await anyio.to_thread.run_sync(self._ensure_collection, len(vectors[0]))
         payload = [
-            dict(record, vector=vector)
-            for record, vector in zip(records, vectors, strict=True)
+            dict(record, vector=vector) for record, vector in zip(records, vectors, strict=True)
         ]
         await anyio.to_thread.run_sync(
             lambda: self.client.upsert(collection_name=self.collection_name, data=payload)

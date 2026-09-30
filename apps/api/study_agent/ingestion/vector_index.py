@@ -1,3 +1,4 @@
+import json
 from uuid import UUID
 
 import anyio
@@ -84,9 +85,7 @@ class MilvusDocumentIndex:
         limit: int,
         material_id: UUID | None = None,
     ) -> list[SearchHit]:
-        exists = await anyio.to_thread.run_sync(
-            self.client.has_collection, self.collection_name
-        )
+        exists = await anyio.to_thread.run_sync(self.client.has_collection, self.collection_name)
         if not exists:
             return []
         vector = await anyio.to_thread.run_sync(self.embeddings.embed_query, query)
@@ -125,9 +124,7 @@ class MilvusDocumentIndex:
         return hits
 
     async def delete_material(self, material_id: UUID) -> None:
-        exists = await anyio.to_thread.run_sync(
-            self.client.has_collection, self.collection_name
-        )
+        exists = await anyio.to_thread.run_sync(self.client.has_collection, self.collection_name)
         if exists:
             await anyio.to_thread.run_sync(
                 lambda: self.client.delete(
@@ -135,3 +132,13 @@ class MilvusDocumentIndex:
                     filter=f'material_id == "{material_id}"',
                 )
             )
+
+    async def delete_stale_chunks(self, material_id: UUID, keep_ids: list[UUID]) -> None:
+        if not await anyio.to_thread.run_sync(self.client.has_collection, self.collection_name):
+            return
+        expression = f'material_id == "{material_id}"'
+        if keep_ids:
+            expression += f" and id not in {json.dumps([str(item) for item in keep_ids])}"
+        await anyio.to_thread.run_sync(
+            lambda: self.client.delete(collection_name=self.collection_name, filter=expression)
+        )

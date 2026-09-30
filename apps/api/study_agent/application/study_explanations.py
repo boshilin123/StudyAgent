@@ -43,9 +43,7 @@ class LangChainStudyExplanationGenerator:
     @staticmethod
     def _enabled(settings: Settings) -> bool:
         return bool(
-            settings.study_explanation_enabled
-            and settings.llm_base_url
-            and settings.llm_model
+            settings.study_explanation_enabled and settings.llm_base_url and settings.llm_model
         )
 
     @staticmethod

@@ -53,6 +53,8 @@ class IngestionJobRepository(Protocol):
 
     async def has_running_for_material(self, material_id: UUID) -> bool: ...
 
+    async def fail_dispatch(self, job_id: UUID) -> None: ...
+
 
 class DocumentChunkRepository(Protocol):
     async def list_for_material(self, material_id: UUID) -> Sequence[DocumentChunk]: ...
@@ -65,8 +67,12 @@ class QuestionGenerationJobRepository(Protocol):
 
     async def has_running_for_material(self, material_id: UUID) -> bool: ...
 
+    async def fail_dispatch(self, job_id: UUID) -> None: ...
+
 
 class QuestionRepository(Protocol):
+    async def invalidate_sources(self, chunk_ids: Sequence[UUID]) -> Sequence[Question]: ...
+
     async def get(self, question_id: UUID) -> Question | None: ...
 
     async def list(
@@ -89,7 +95,7 @@ class QuestionRepository(Protocol):
         question_types: Sequence[str],
         difficulty_min: int,
         difficulty_max: int,
-        limit: int,
+        limit: int | None,
     ) -> Sequence[Question]: ...
 
 
@@ -151,6 +157,8 @@ class UnitOfWork(Protocol):
 
     async def rollback(self) -> None: ...
 
+    async def lock(self, key: UUID) -> None: ...
+
 
 class ObjectStorage(Protocol):
     async def put(
@@ -190,6 +198,8 @@ class QuestionGenerationDispatcher(Protocol):
 
 class QuestionIndex(Protocol):
     async def upsert_question(self, question: Question) -> str: ...
+
+    async def delete_questions(self, question_ids: Sequence[UUID]) -> None: ...
 
 
 class StudyExplanationGenerator(Protocol):

@@ -1,3 +1,5 @@
+from uuid import UUID
+
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from study_agent.domain.ports import (
@@ -12,6 +14,7 @@ from study_agent.domain.ports import (
     ReviewTaskRepository,
     StudySessionRepository,
 )
+from study_agent.infrastructure.locks import transaction_lock
 from study_agent.infrastructure.repositories import (
     SqlAlchemyAnswerRecordRepository,
     SqlAlchemyDocumentChunkRepository,
@@ -47,3 +50,6 @@ class SqlAlchemyUnitOfWork:
 
     async def rollback(self) -> None:
         await self.session.rollback()
+
+    async def lock(self, key: UUID) -> None:
+        await transaction_lock(self.session, key)

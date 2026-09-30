@@ -36,9 +36,7 @@ async def create_question_generation_job(
     dispatcher: QuestionGenerationDispatcherDependency,
 ) -> QuestionGenerationJobResponse:
     if payload.difficulty_min > payload.difficulty_max:
-        raise DomainError(
-            "INVALID_DIFFICULTY_RANGE", "最低难度不能高于最高难度", status_code=422
-        )
+        raise DomainError("INVALID_DIFFICULTY_RANGE", "最低难度不能高于最高难度", status_code=422)
     job = await service.create_generation_job(
         uow,
         dispatcher,

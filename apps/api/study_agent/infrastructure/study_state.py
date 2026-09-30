@@ -20,7 +20,10 @@ class RedisStudyStateStore:
             return None
         if not raw:
             return None
-        value = json.loads(raw)
+        try:
+            value = json.loads(raw)
+        except (ValueError, TypeError):
+            return None
         return value if isinstance(value, dict) else None
 
     async def save(self, session_id: UUID, state: dict[str, object]) -> None:

@@ -292,9 +292,7 @@ class StudySessionModel(Base):
             "mode in ('diagnostic', 'practice', 'review', 'mock_exam')",
             name="ck_study_mode",
         ),
-        CheckConstraint(
-            "status in ('active', 'completed', 'abandoned')", name="ck_study_status"
-        ),
+        CheckConstraint("status in ('active', 'completed', 'abandoned')", name="ck_study_status"),
         Index("ix_study_sessions_kb_started", "knowledge_base_id", "started_at"),
     )
 
@@ -319,9 +317,7 @@ class StudySessionModel(Base):
 
 class SessionQuestionModel(Base):
     __tablename__ = "session_questions"
-    __table_args__ = (
-        UniqueConstraint("session_id", "question_id", name="uq_session_question"),
-    )
+    __table_args__ = (UniqueConstraint("session_id", "question_id", name="uq_session_question"),)
 
     session_id: Mapped[UUID] = mapped_column(
         ForeignKey("study_sessions.id", ondelete="CASCADE"), primary_key=True
@@ -330,9 +326,7 @@ class SessionQuestionModel(Base):
     question_id: Mapped[UUID] = mapped_column(
         ForeignKey("questions.id", ondelete="RESTRICT"), nullable=False
     )
-    selection_reason: Mapped[dict[str, object]] = mapped_column(
-        JSON, default=dict, nullable=False
-    )
+    selection_reason: Mapped[dict[str, object]] = mapped_column(JSON, default=dict, nullable=False)
     priority_score: Mapped[Decimal] = mapped_column(
         Numeric(7, 6), default=Decimal("0"), nullable=False
     )

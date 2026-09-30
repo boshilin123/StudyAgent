@@ -1,9 +1,9 @@
 from collections.abc import Sequence
-from datetime import datetime
+from datetime import UTC, datetime
 from decimal import Decimal
 from uuid import UUID
 
-from sqlalchemy import func, select
+from sqlalchemy import delete, func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from study_agent.domain.models import (
@@ -20,6 +20,7 @@ from study_agent.domain.models import (
     SessionQuestion,
     StudySession,
 )
+from study_agent.infrastructure.locks import transaction_lock
 from study_agent.infrastructure.models import (
     AnswerRecordModel,
     DocumentChunkModel,
@@ -109,9 +110,7 @@ def _question_job_from_model(model: QuestionGenerationJobModel) -> QuestionGener
     )
 
 
-def _question_from_model(
-    model: QuestionModel, sources: Sequence[QuestionSource] = ()
-) -> Question:
+def _question_from_model(model: QuestionModel, sources: Sequence[QuestionSource] = ()) -> Question:
     return Question(
         id=model.id,
         knowledge_base_id=model.knowledge_base_id,
@@ -392,10 +391,23 @@ class SqlAlchemyIngestionJobRepository:
             .where(
                 IngestionJobModel.material_id == material_id,
                 IngestionJobModel.status.in_(["pending", "running"]),
-                IngestionJobModel.stage != "uploaded",
             )
         )
         return int((await self.session.scalar(stmt)) or 0) > 0
+
+    async def fail_dispatch(self, job_id: UUID) -> None:
+        job = await self.session.get(IngestionJobModel, job_id)
+        if job is not None:
+            job.status = "failed"
+            job.stage = "failed"
+            job.error_code = "TASK_QUEUE_UNAVAILABLE"
+            job.error_message = "任务派发失败，请重新处理资料"
+            job.finished_at = datetime.now(UTC)
+            material = await self.session.get(MaterialModel, job.material_id)
+            if material is not None:
+                material.parse_status = "failed"
+                material.error_message = job.error_message
+            await self.session.flush()
 
 
 class SqlAlchemyDocumentChunkRepository:
@@ -471,10 +483,65 @@ class SqlAlchemyQuestionGenerationJobRepository:
         )
         return int((await self.session.scalar(stmt)) or 0) > 0
 
+    async def fail_dispatch(self, job_id: UUID) -> None:
+        job = await self.session.get(QuestionGenerationJobModel, job_id)
+        if job is not None:
+            job.status = "failed"
+            job.stage = "failed"
+            job.error_code = "TASK_QUEUE_UNAVAILABLE"
+            job.error_message = "任务派发失败，请重试生成"
+            job.finished_at = datetime.now(UTC)
+            await self.session.flush()
+
 
 class SqlAlchemyQuestionRepository:
     def __init__(self, session: AsyncSession) -> None:
         self.session = session
+
+    async def invalidate_sources(self, chunk_ids: Sequence[UUID]) -> Sequence[Question]:
+        affected = select(QuestionSourceModel.question_id).where(
+            QuestionSourceModel.chunk_id.in_(chunk_ids)
+        )
+        has_source = (
+            select(QuestionSourceModel.question_id)
+            .where(QuestionSourceModel.question_id == QuestionModel.id)
+            .exists()
+        )
+        lock_ids = list(
+            (
+                await self.session.scalars(
+                    select(QuestionModel.id)
+                    .where(QuestionModel.id.in_(affected) | ~has_source)
+                    .order_by(QuestionModel.id)
+                )
+            ).all()
+        )
+        for question_id in lock_ids:
+            await transaction_lock(self.session, question_id)
+        if chunk_ids:
+            await self.session.execute(
+                delete(QuestionSourceModel).where(QuestionSourceModel.chunk_id.in_(chunk_ids))
+            )
+        orphaned = list(
+            (
+                await self.session.scalars(
+                    select(QuestionModel)
+                    .where(
+                        ~select(QuestionSourceModel.question_id)
+                        .where(QuestionSourceModel.question_id == QuestionModel.id)
+                        .exists(),
+                        (QuestionModel.status == "active") | (QuestionModel.vector_id.is_not(None)),
+                    )
+                    .with_for_update()
+                )
+            ).all()
+        )
+        for model in orphaned:
+            if model.status == "active":
+                model.status = "disabled"
+                model.updated_at = datetime.now(UTC)
+        await self.session.flush()
+        return [_question_from_model(model, []) for model in orphaned]
 
     async def _sources(self, question_ids: Sequence[UUID]) -> dict[UUID, list[QuestionSource]]:
         if not question_ids:
@@ -517,8 +584,10 @@ class SqlAlchemyQuestionRepository:
             filters.append(QuestionModel.status == status)
         id_query = select(QuestionModel.id, QuestionModel.created_at).where(*filters)
         if material_id:
-            id_query = id_query.join(QuestionSourceModel).join(DocumentChunkModel).where(
-                DocumentChunkModel.material_id == material_id
+            id_query = (
+                id_query.join(QuestionSourceModel)
+                .join(DocumentChunkModel)
+                .where(DocumentChunkModel.material_id == material_id)
             )
         id_query = id_query.distinct()
         total = int(
@@ -561,6 +630,7 @@ class SqlAlchemyQuestionRepository:
         model.vector_id = question.vector_id
         model.updated_at = question.updated_at or model.updated_at
         await self.session.flush()
+        await self.session.refresh(model)
         return _question_from_model(model, question.sources)
 
     async def list_active_candidates(
@@ -570,7 +640,7 @@ class SqlAlchemyQuestionRepository:
         question_types: Sequence[str],
         difficulty_min: int,
         difficulty_max: int,
-        limit: int,
+        limit: int | None,
     ) -> Sequence[Question]:
         stmt = (
             select(QuestionModel)
@@ -579,6 +649,9 @@ class SqlAlchemyQuestionRepository:
                 QuestionModel.status == "active",
                 QuestionModel.question_type.in_(question_types),
                 QuestionModel.difficulty.between(difficulty_min, difficulty_max),
+                select(QuestionSourceModel.question_id)
+                .where(QuestionSourceModel.question_id == QuestionModel.id)
+                .exists(),
             )
             .order_by(QuestionModel.difficulty, QuestionModel.created_at, QuestionModel.id)
             .limit(limit)
@@ -623,6 +696,7 @@ class SqlAlchemyStudySessionRepository:
             select(StudySessionModel)
             .where(StudySessionModel.id == session_id)
             .with_for_update()
+            .execution_options(populate_existing=True)
         )
         return _study_session_from_model(model) if model else None
 
@@ -679,9 +753,11 @@ class SqlAlchemyStudySessionRepository:
         if knowledge_base_id:
             filters.append(StudySessionModel.knowledge_base_id == knowledge_base_id)
         total = int(
-            (await self.session.scalar(
-                select(func.count()).select_from(StudySessionModel).where(*filters)
-            ))
+            (
+                await self.session.scalar(
+                    select(func.count()).select_from(StudySessionModel).where(*filters)
+                )
+            )
             or 0
         )
         stmt = (
@@ -791,9 +867,7 @@ class SqlAlchemyMasteryRepository:
         if knowledge_base_id:
             stmt = stmt.where(MasteryRecordModel.knowledge_base_id == knowledge_base_id)
         stmt = stmt.order_by(MasteryRecordModel.mastery_score, MasteryRecordModel.updated_at.desc())
-        return [
-            _mastery_from_model(model) for model in (await self.session.scalars(stmt)).all()
-        ]
+        return [_mastery_from_model(model) for model in (await self.session.scalars(stmt)).all()]
 
 
 class SqlAlchemyReviewTaskRepository:
@@ -802,9 +876,7 @@ class SqlAlchemyReviewTaskRepository:
 
     async def get_by_knowledge_point(self, knowledge_point_id: UUID) -> ReviewTask | None:
         model = await self.session.scalar(
-            select(ReviewTaskModel).where(
-                ReviewTaskModel.knowledge_point_id == knowledge_point_id
-            )
+            select(ReviewTaskModel).where(ReviewTaskModel.knowledge_point_id == knowledge_point_id)
         )
         return _review_from_model(model) if model else None
 

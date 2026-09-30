@@ -8,7 +8,7 @@ services:
       POSTGRES_USER: ${POSTGRES_USER:-study_agent}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-change_me}
     ports:
-      - "${POSTGRES_PORT:-55432}:5432"
+      - "127.0.0.1:${POSTGRES_PORT:-55432}:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
@@ -22,7 +22,7 @@ services:
     image: redis:7.4.2-alpine
     command: redis-server --appendonly yes
     ports:
-      - "${REDIS_PORT:-56379}:6379"
+      - "127.0.0.1:${REDIS_PORT:-56379}:6379"
     volumes:
       - redis_data:/data
     healthcheck:
@@ -33,7 +33,7 @@ services:
     restart: unless-stopped
 
   minio:
-    image: rustfs/rustfs:latest
+    image: rustfs/rustfs@sha256:8cc9801755448b71a786705ce76692c77e14936cccd87cf2fc31842e58f4d1ff
     environment:
       RUSTFS_VOLUMES: /data
       RUSTFS_ADDRESS: 0.0.0.0:9000
@@ -42,8 +42,8 @@ services:
       RUSTFS_ACCESS_KEY: ${MINIO_ACCESS_KEY:-study_agent}
       RUSTFS_SECRET_KEY: ${MINIO_SECRET_KEY:-change_me_minio}
     ports:
-      - "${OBJECT_STORAGE_PORT:-59000}:9000"
-      - "${OBJECT_STORAGE_CONSOLE_PORT:-59001}:9001"
+      - "127.0.0.1:${OBJECT_STORAGE_PORT:-59000}:9000"
+      - "127.0.0.1:${OBJECT_STORAGE_CONSOLE_PORT:-59001}:9001"
     volumes:
       - minio_data:/data
     healthcheck:
@@ -79,8 +79,8 @@ services:
       MINIO_ACCESS_KEY_ID: ${MINIO_ACCESS_KEY:-study_agent}
       MINIO_SECRET_ACCESS_KEY: ${MINIO_SECRET_KEY:-change_me_minio}
     ports:
-      - "${MILVUS_PORT:-59530}:19530"
-      - "${MILVUS_HEALTH_PORT:-59091}:9091"
+      - "127.0.0.1:${MILVUS_PORT:-59530}:19530"
+      - "127.0.0.1:${MILVUS_HEALTH_PORT:-59091}:9091"
     volumes:
       - milvus_data:/var/lib/milvus
     healthcheck:
@@ -102,7 +102,7 @@ services:
     env_file: .env
     command: sh -c "alembic upgrade head && uvicorn study_agent.main:app --host 0.0.0.0 --port 8000 --reload"
     ports:
-      - "${APP_PORT:-8000}:8000"
+      - "127.0.0.1:${APP_PORT:-8000}:8000"
     volumes:
       - ./apps/api:/app
     depends_on:
@@ -115,7 +115,7 @@ services:
       milvus:
         condition: service_healthy
     healthcheck:
-      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/api/health/live')"]
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/api/health/ready', timeout=6)"]
       interval: 10s
       timeout: 5s
       retries: 10
@@ -126,6 +126,11 @@ services:
       context: ./apps/api
     env_file: .env
     command: celery -A study_agent.worker.celery_app worker --loglevel=INFO --concurrency=2
+    healthcheck:
+      test: ["CMD-SHELL", "celery -A study_agent.worker.celery_app inspect ping -d celery@$$HOSTNAME --timeout=3 | grep -q pong"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
     volumes:
       - ./apps/api:/app
     depends_on:
@@ -144,7 +149,7 @@ services:
       VITE_API_BASE_URL: ${VITE_API_BASE_URL:-/api}
       VITE_API_PROXY_TARGET: ${VITE_API_PROXY_TARGET:-http://api:8000}
     ports:
-      - "${WEB_PORT:-5173}:5173"
+      - "127.0.0.1:${WEB_PORT:-5173}:5173"
     volumes:
       - ./apps/web:/app
       - web_node_modules:/app/node_modules

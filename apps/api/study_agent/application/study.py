@@ -47,11 +47,9 @@ class AnswerResult:
 
 def _normalize_text(value: object) -> str:
     text = unicodedata.normalize("NFKC", str(value)).casefold().strip()
-    return "".join(
-        character
-        for character in text
-        if not unicodedata.category(character).startswith(("P", "Z"))
-    )
+    # Only sentence punctuation is optional; signs, decimal points, slashes and
+    # internal spaces may carry meaning. Equivalent expressions use answer aliases.
+    return " ".join(text.split()).rstrip("。！？!?；;").strip()
 
 
 def _answer_list(correct_answer: object) -> list[object]:
@@ -144,9 +142,7 @@ class StudyService:
                 selected_questions=[],
             )
             if selection:
-                assignments = [
-                    (selection.question, selection.reason, selection.priority_score)
-                ]
+                assignments = [(selection.question, selection.reason, selection.priority_score)]
         if not assignments:
             code = "NO_DUE_REVIEWS" if mode == "review" else "NO_ACTIVE_QUESTIONS"
             message = "没有到期且可用的复习题" if mode == "review" else "没有符合条件的已启用题目"
@@ -214,6 +210,8 @@ class StudyService:
         explanation_generator: StudyExplanationGenerator | None = None,
         state_store: StudyStateStore | None = None,
     ) -> AnswerResult:
+        # This also serializes the first use of an ID across different sessions.
+        await uow.lock(submission_id)
         replay = await uow.answer_records.get_by_submission(submission_id)
         if replay is not None:
             return await self._replay_result(
@@ -229,9 +227,17 @@ class StudyService:
             raise DomainError("STUDY_SESSION_NOT_FOUND", "学习会话不存在", status_code=404)
         if study_session.status != "active":
             raise DomainError("STUDY_SESSION_FINISHED", "学习会话已经结束", status_code=409)
+        await uow.lock(question_id)
         question, _ = await self._current_assignment(uow, study_session)
         if question is None or question.id != question_id:
             raise DomainError("QUESTION_OUT_OF_ORDER", "只能提交当前题目的答案", status_code=409)
+        if question.status != "active" or not question.sources:
+            raise DomainError(
+                "QUESTION_UNAVAILABLE", "题目已停用或来源失效，请结束本轮学习", status_code=409
+            )
+        # A point may not have a mastery/review row yet: a row lock alone cannot
+        # protect concurrent inserts. Transaction-scoped advisory locks can.
+        await uow.lock(question.knowledge_point_id)
 
         grade = grade_question(question, answer)
         now = datetime.now(UTC)
@@ -299,13 +305,16 @@ class StudyService:
             )
         )
         await uow.commit()
-        explanation_data = (
-            await explanation_generator.explain(
-                question=question, user_answer=answer, correct=grade.correct
+        try:
+            explanation_data = (
+                await explanation_generator.explain(
+                    question=question, user_answer=answer, correct=grade.correct
+                )
+                if explanation_generator
+                else fallback_explanation(question=question, correct=grade.correct)
             )
-            if explanation_generator
-            else fallback_explanation(question=question, correct=grade.correct)
-        )
+        except Exception:
+            explanation_data = fallback_explanation(question=question, correct=grade.correct)
         answer_record = await uow.answer_records.update_explanation(
             answer_record.id, explanation_data
         )
@@ -363,11 +372,12 @@ class StudyService:
         sequence = study_session.answered_question_count + 1
         items = await uow.study_sessions.list_questions(study_session.id)
         selected = next((item for item in items if item.sequence == sequence), None)
-        return (
-            (await uow.questions.get(selected.question_id), selected)
-            if selected
-            else (None, None)
-        )
+        if selected is None:
+            return None, None
+        question = await uow.questions.get(selected.question_id)
+        if question is None or question.status != "active" or not question.sources:
+            return None, selected
+        return question, selected
 
     async def _current_question(
         self, uow: UnitOfWork, study_session: StudySession
@@ -375,9 +385,7 @@ class StudyService:
         question, _ = await self._current_assignment(uow, study_session)
         return question
 
-    async def _selected_questions(
-        self, uow: UnitOfWork, session_id: UUID
-    ) -> list[Question]:
+    async def _selected_questions(self, uow: UnitOfWork, session_id: UUID) -> list[Question]:
         assignments = await uow.study_sessions.list_questions(session_id)
         questions: list[Question] = []
         for assignment in assignments:
@@ -393,11 +401,7 @@ class StudyService:
         previous_score = current.mastery_score if current else 0.3
         answered = (current.answered_count if current else 0) + 1
         correct_count = (current.correct_count if current else 0) + int(correct)
-        score = (
-            previous_score + 0.15 * (1 - previous_score)
-            if correct
-            else previous_score * 0.8
-        )
+        score = previous_score + 0.15 * (1 - previous_score) if correct else previous_score * 0.8
         return await uow.mastery.upsert(
             MasteryRecord(
                 knowledge_point_id=question.knowledge_point_id,
@@ -519,8 +523,7 @@ class StudyService:
             ],
             "remaining_question_count": max(
                 0,
-                study_session.planned_question_count
-                - study_session.answered_question_count,
+                study_session.planned_question_count - study_session.answered_question_count,
             ),
             "next_action": "await_answer" if current_question else "finish",
             "updated_at": datetime.now(UTC).isoformat(),

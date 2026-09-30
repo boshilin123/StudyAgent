@@ -26,8 +26,10 @@ def question_content_hash(question_type: str, stem: str, correct_answer: object)
 
 def validate_question_shape(question: Question) -> None:
     answers = question.correct_answer
-    if not isinstance(answers, list) or not answers or not all(
-        isinstance(answer, str) and answer.strip() for answer in answers
+    if (
+        not isinstance(answers, list)
+        or not answers
+        or not all(isinstance(answer, str) and answer.strip() for answer in answers)
     ):
         raise DomainError("QUESTION_QUALITY_GATE_FAILED", "题目答案不能为空", status_code=422)
     if question.question_type == "single_choice":
@@ -52,9 +54,7 @@ def validate_question_shape(question: Question) -> None:
                 status_code=422,
             )
     elif question.options:
-        raise DomainError(
-            "QUESTION_QUALITY_GATE_FAILED", "填空题不能包含选择项", status_code=422
-        )
+        raise DomainError("QUESTION_QUALITY_GATE_FAILED", "填空题不能包含选择项", status_code=422)
 
 
 class QuestionService:
@@ -70,11 +70,14 @@ class QuestionService:
         difficulty_max: int,
         language: str,
     ) -> QuestionGenerationJob:
+        await uow.lock(material_id)
         material = await uow.materials.get(material_id)
         if material is None:
             raise DomainError("MATERIAL_NOT_FOUND", "资料不存在", status_code=404)
         if material.parse_status != "ready":
             raise DomainError("MATERIAL_NOT_READY", "资料尚未完成解析和索引", status_code=409)
+        if await uow.ingestion_jobs.has_running_for_material(material_id):
+            raise DomainError("MATERIAL_JOB_RUNNING", "资料仍有运行中的任务", status_code=409)
         if await uow.question_generation_jobs.has_running_for_material(material_id):
             raise DomainError(
                 "QUESTION_GENERATION_RUNNING", "该资料已有运行中的题库生成任务", status_code=409
@@ -105,14 +108,14 @@ class QuestionService:
         try:
             dispatcher.dispatch(job_id=job.id, material_id=material_id)
         except Exception as exc:
+            await uow.question_generation_jobs.fail_dispatch(job.id)
+            await uow.commit()
             raise DomainError(
                 "TASK_QUEUE_UNAVAILABLE", "题库生成任务提交失败", status_code=503
             ) from exc
         return job
 
-    async def get_generation_job(
-        self, uow: UnitOfWork, job_id: UUID
-    ) -> QuestionGenerationJob:
+    async def get_generation_job(self, uow: UnitOfWork, job_id: UUID) -> QuestionGenerationJob:
         job = await uow.question_generation_jobs.get(job_id)
         if job is None:
             raise DomainError(
@@ -160,6 +163,7 @@ class QuestionService:
         difficulty: int | None = None,
         options_is_set: bool = False,
     ) -> Question:
+        await uow.lock(question_id)
         current = await self.get(uow, question_id)
         updated = replace(
             current,
@@ -189,6 +193,7 @@ class QuestionService:
     async def set_status(
         self, uow: UnitOfWork, question_index: QuestionIndex, question_id: UUID, status: str
     ) -> Question:
+        await uow.lock(question_id)
         current = await self.get(uow, question_id)
         validate_question_shape(current)
         if status == "active" and not current.sources:

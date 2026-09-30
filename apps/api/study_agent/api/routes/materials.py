@@ -9,6 +9,7 @@ from fastapi.responses import Response
 from study_agent.api.dependencies import (
     DocumentIndexDependency,
     IngestionDispatcherDependency,
+    QuestionIndexDependency,
     StorageDependency,
     UnitOfWorkDependency,
 )
@@ -79,8 +80,9 @@ async def _inspect_upload(file: UploadFile, title: str | None) -> UploadPayload:
     if not clean_title or len(clean_title) > 300:
         raise DomainError("INVALID_MATERIAL_TITLE", "资料标题不合法", status_code=422)
     supplied_media_type = (file.content_type or "").lower()
-    if supplied_media_type not in {"", "application/octet-stream"} and supplied_media_type not in (
-        ALLOWED_MEDIA_TYPES[suffix]
+    if (
+        supplied_media_type not in {"", "application/octet-stream"}
+        and supplied_media_type not in (ALLOWED_MEDIA_TYPES[suffix])
     ):
         raise DomainError(
             "INVALID_MEDIA_TYPE",
@@ -124,7 +126,14 @@ async def upload_material(
         knowledge_base_id=knowledge_base_id,
         payload=payload,
     )
-    dispatcher.dispatch(job_id=job.id, material_id=material.id)
+    try:
+        dispatcher.dispatch(job_id=job.id, material_id=material.id)
+    except Exception as exc:
+        await uow.ingestion_jobs.fail_dispatch(job.id)
+        await uow.commit()
+        raise DomainError(
+            "TASK_QUEUE_UNAVAILABLE", "资料处理任务派发失败，可重新处理", status_code=503
+        ) from exc
     return MaterialUploadResponse(
         material=MaterialResponse.model_validate(material),
         job=IngestionJobResponse.model_validate(job),
@@ -185,8 +194,9 @@ async def delete_material(
     uow: UnitOfWorkDependency,
     storage: StorageDependency,
     document_index: DocumentIndexDependency,
+    question_index: QuestionIndexDependency,
 ) -> Response:
-    await service.delete(uow, storage, document_index, material_id)
+    await service.delete(uow, storage, document_index, material_id, question_index)
     return Response(status_code=status.HTTP_204_NO_CONTENT)
 
 
@@ -216,9 +226,24 @@ async def search_materials(
         limit=limit,
         material_id=material_id,
     )
+    # Vector writes are not a PostgreSQL transaction. Never expose stale chunks
+    # while a material is reprocessing, or after an interrupted index cleanup.
+    valid_hits = []
+    valid_ids: dict[UUID, set[UUID]] = {}
+    for hit in hits:
+        if hit.material_id not in valid_ids:
+            material = await uow.materials.get(hit.material_id)
+            chunks = (
+                await uow.document_chunks.list_for_material(hit.material_id)
+                if material and material.parse_status == "ready"
+                else []
+            )
+            valid_ids[hit.material_id] = {chunk.id for chunk in chunks}
+        if hit.chunk_id in valid_ids[hit.material_id]:
+            valid_hits.append(hit)
     return SearchResponse(
         query=q,
-        items=[SearchHitResponse.model_validate(hit) for hit in hits],
+        items=[SearchHitResponse.model_validate(hit) for hit in valid_hits],
     )
 
 

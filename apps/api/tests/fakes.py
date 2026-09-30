@@ -1,4 +1,6 @@
 from collections.abc import Sequence
+from dataclasses import replace
+from datetime import UTC, datetime
 from typing import BinaryIO
 from uuid import UUID
 
@@ -92,10 +94,17 @@ class FakeIngestionJobRepository:
 
     async def has_running_for_material(self, material_id: UUID) -> bool:
         return any(
-            item.material_id == material_id
-            and item.status in {"pending", "running"}
-            and item.stage != "uploaded"
+            item.material_id == material_id and item.status in {"pending", "running"}
             for item in self.items.values()
+        )
+
+    async def fail_dispatch(self, job_id: UUID) -> None:
+        self.items[job_id] = replace(
+            self.items[job_id],
+            status="failed",
+            stage="failed",
+            error_code="TASK_QUEUE_UNAVAILABLE",
+            finished_at=datetime.now(UTC),
         )
 
 
@@ -124,10 +133,32 @@ class FakeQuestionGenerationJobRepository:
             for item in self.items.values()
         )
 
+    async def fail_dispatch(self, job_id: UUID) -> None:
+        self.items[job_id] = replace(
+            self.items[job_id],
+            status="failed",
+            stage="failed",
+            error_code="TASK_QUEUE_UNAVAILABLE",
+            finished_at=datetime.now(UTC),
+        )
+
 
 class FakeQuestionRepository:
     def __init__(self) -> None:
         self.items: dict[UUID, Question] = {}
+
+    async def invalidate_sources(self, chunk_ids: Sequence[UUID]) -> Sequence[Question]:
+        orphaned = []
+        for question in list(self.items.values()):
+            sources = [source for source in question.sources if source.chunk_id not in chunk_ids]
+            updated = replace(question, sources=sources)
+            if not sources and (question.status == "active" or question.vector_id):
+                updated = replace(
+                    updated, status="disabled" if question.status == "active" else question.status
+                )
+                orphaned.append(updated)
+            self.items[question.id] = updated
+        return orphaned
 
     async def get(self, question_id: UUID) -> Question | None:
         return self.items.get(question_id)
@@ -176,6 +207,9 @@ class FakeUnitOfWork:
     async def rollback(self) -> None:
         self.rollbacks += 1
 
+    async def lock(self, key: UUID) -> None:
+        pass
+
 
 class FakeObjectStorage:
     def __init__(self) -> None:
@@ -218,6 +252,10 @@ class FakeQuestionGenerationDispatcher(FakeIngestionDispatcher):
 class FakeQuestionIndex:
     def __init__(self) -> None:
         self.upserted: list[Question] = []
+        self.deleted: list[UUID] = []
+
+    async def delete_questions(self, question_ids: Sequence[UUID]) -> None:
+        self.deleted.extend(question_ids)
 
     async def upsert_question(self, question: Question) -> str:
         self.upserted.append(question)

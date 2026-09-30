@@ -127,9 +127,7 @@ def _parse_xlsx(content: bytes, filename: str) -> list[Document]:
                 values = [str(value).strip() if value is not None else "" for value in row]
                 if any(values):
                     rows.append("\t".join(values).rstrip())
-            document = _document(
-                "\n".join(rows), source=filename, heading_path=[worksheet.title]
-            )
+            document = _document("\n".join(rows), source=filename, heading_path=[worksheet.title])
             if document:
                 documents.append(document)
     finally:

@@ -1,7 +1,7 @@
 from functools import lru_cache
 from typing import Literal
 
-from pydantic import Field
+from pydantic import Field, field_validator, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -44,9 +44,7 @@ class Settings(BaseSettings):
     llm_temperature: float = 0.1
     llm_timeout_seconds: float = 60.0
     llm_enable_thinking: bool = False
-    llm_structured_output_method: Literal["parser", "function_calling", "json_schema"] = (
-        "parser"
-    )
+    llm_structured_output_method: Literal["parser", "function_calling", "json_schema"] = "parser"
     embedding_base_url: str | None = None
     embedding_api_key: str | None = None
     embedding_model: str | None = None
@@ -62,6 +60,19 @@ class Settings(BaseSettings):
 
     max_upload_size_mb: int = 100
     session_ttl_seconds: int = 7200
+    readiness_timeout_seconds: float = 3.0
+    api_access_token: str | None = Field(default=None, min_length=32, pattern=r"^[A-Za-z0-9_-]+$")
+
+    @field_validator("api_access_token", mode="before")
+    @classmethod
+    def empty_token_is_none(cls, value: object) -> object:
+        return None if value == "" else value
+
+    @model_validator(mode="after")
+    def require_production_access_control(self) -> "Settings":
+        if self.app_env == "production" and not self.api_access_token:
+            raise ValueError("production requires API_ACCESS_TOKEN (32+ URL-safe characters)")
+        return self
 
 
 @lru_cache

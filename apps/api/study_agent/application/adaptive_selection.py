@@ -33,11 +33,12 @@ class AdaptiveQuestionSelector:
                 question_types=question_types,
                 difficulty_min=difficulty_min,
                 difficulty_max=difficulty_max,
-                limit=500,
+                limit=None,
             )
         )
         excluded_ids = {question.id for question in selected_questions}
         candidates = [question for question in candidates if question.id not in excluded_ids]
+        candidates = [question for question in candidates if question.sources]
         if not candidates:
             return None
 
@@ -61,6 +62,17 @@ class AdaptiveQuestionSelector:
                 selected_point_counts.get(question.knowledge_point_id, 0) + 1
             )
 
+        if mode == "diagnostic":
+            # Cover unseen points before spending a second question on one point.
+            minimum = min(
+                selected_point_counts.get(question.knowledge_point_id, 0) for question in candidates
+            )
+            candidates = [
+                question
+                for question in candidates
+                if selected_point_counts.get(question.knowledge_point_id, 0) == minimum
+            ]
+
         ranked: list[tuple[float, Question, dict[str, object]]] = []
         for question in candidates:
             record = mastery.get(question.knowledge_point_id)
@@ -72,23 +84,16 @@ class AdaptiveQuestionSelector:
                 and last_question.knowledge_point_id == question.knowledge_point_id
             )
             if mode == "diagnostic":
-                knowledge_priority = (
-                    0.20 * (1 - mastery_score) + 0.10 * due_score + 0.70
-                )
+                knowledge_priority = 0.20 * (1 - mastery_score) + 0.10 * due_score + 0.70
             else:
                 knowledge_priority = (
-                    0.45 * (1 - mastery_score)
-                    + 0.25 * due_score
-                    + 0.10
-                    + 0.20 * recent_error
+                    0.45 * (1 - mastery_score) + 0.25 * due_score + 0.10 + 0.20 * recent_error
                 )
 
             target_difficulty = round(1 + mastery_score * 4)
             if recent_error and last_question is not None:
                 target_difficulty = max(difficulty_min, last_question.difficulty - 1)
-            target_difficulty = max(
-                difficulty_min, min(difficulty_max, target_difficulty)
-            )
+            target_difficulty = max(difficulty_min, min(difficulty_max, target_difficulty))
             difficulty_match = max(0.0, 1 - abs(question.difficulty - target_difficulty) / 4)
             freshness = 0.0 if question.id in answered_ids else 1.0
             source_quality = min(1.0, len(question.sources) / 2)

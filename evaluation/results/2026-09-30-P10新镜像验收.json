@@ -1,0 +1,51 @@
+{
+  "evaluation_type": "p9_comprehensive_end_to_end",
+  "generated_at": "2026-09-30T07:58:37.933317+00:00",
+  "token": "P9-7bf4cf07f396",
+  "steps": {
+    "health": {
+      "status": "passed"
+    },
+    "error_contract": {
+      "status": "passed"
+    },
+    "knowledge_base_crud": {
+      "status": "passed",
+      "knowledge_base_id": "abb2c3fc-4f8d-4c1a-8fd4-de334aff906a"
+    },
+    "upload_parse_index_search": {
+      "status": "passed",
+      "material_id": "8936e71b-fb46-4f89-ab29-e94754c1f02b",
+      "chunk_count": 3,
+      "top_score": 0.4087338149547577
+    },
+    "reprocess": {
+      "status": "passed"
+    },
+    "question_generation_review": {
+      "status": "passed",
+      "generated_count": 6,
+      "rejected_count": 0,
+      "question_types": [
+        "fill_blank",
+        "single_choice",
+        "true_false"
+      ]
+    },
+    "study_idempotency_progress": {
+      "status": "passed",
+      "session_id": "b7a3a4e3-21ae-46eb-bee3-0ff96b09b93f",
+      "answered_count": 3,
+      "correct_count": 2,
+      "incorrect_count": 1,
+      "mastery_count": 3,
+      "due_review_count": 3
+    },
+    "archive_guard": {
+      "status": "passed"
+    }
+  },
+  "knowledge_base_id": "abb2c3fc-4f8d-4c1a-8fd4-de334aff906a",
+  "status": "passed",
+  "duration_ms": 40298.612
+}
