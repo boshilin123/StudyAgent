@@ -5,8 +5,8 @@ from uuid import UUID
 from fastapi import APIRouter, Query, status
 
 from study_agent.api.dependencies import (
+    LearningSessionSnapshotDependency,
     StudyExplanationDependency,
-    StudyStateDependency,
     UnitOfWorkDependency,
 )
 from study_agent.api.schemas import (
@@ -99,7 +99,7 @@ def _answer_response(result: AnswerResult) -> AnswerResultResponse:
 async def create_session(
     payload: StudySessionCreate,
     uow: UnitOfWorkDependency,
-    state_store: StudyStateDependency,
+    state_store: LearningSessionSnapshotDependency,
 ) -> StudySessionResponse:
     if payload.difficulty_min > payload.difficulty_max:
         raise DomainError("INVALID_DIFFICULTY_RANGE", "最低难度不能高于最高难度", status_code=422)
@@ -120,7 +120,7 @@ async def create_session(
 async def get_session(
     session_id: UUID,
     uow: UnitOfWorkDependency,
-    state_store: StudyStateDependency,
+    state_store: LearningSessionSnapshotDependency,
 ) -> StudySessionResponse:
     return _view_response(await service.get_session(uow, session_id, state_store))
 
@@ -131,7 +131,7 @@ async def submit_answer(
     payload: AnswerSubmit,
     uow: UnitOfWorkDependency,
     explanation_generator: StudyExplanationDependency,
-    state_store: StudyStateDependency,
+    state_store: LearningSessionSnapshotDependency,
 ) -> AnswerResultResponse:
     result = await service.submit_answer(
         uow,
@@ -150,7 +150,7 @@ async def submit_answer(
 async def finish_session(
     session_id: UUID,
     uow: UnitOfWorkDependency,
-    state_store: StudyStateDependency,
+    state_store: LearningSessionSnapshotDependency,
 ) -> StudySessionResponse:
     return _view_response(await service.finish_session(uow, session_id, state_store))
 

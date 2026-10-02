@@ -12,8 +12,6 @@ from study_agent.application.questions import question_content_hash
 from study_agent.config import get_settings
 from study_agent.domain.models import DocumentChunk
 from study_agent.infrastructure.models import (
-    AgentRunModel,
-    AgentStepModel,
     DocumentChunkModel,
     KnowledgePointModel,
     KnowledgePointSourceModel,
@@ -21,15 +19,17 @@ from study_agent.infrastructure.models import (
     QuestionGenerationJobModel,
     QuestionModel,
     QuestionSourceModel,
+    WorkflowRunModel,
+    WorkflowStepModel,
 )
 from study_agent.question_generation.chains import (
     PROMPT_VERSION,
-    build_knowledge_point_chain,
-    build_question_chain,
+    create_knowledge_point_chain,
+    create_question_generation_chain,
     serialize_knowledge_points,
 )
 from study_agent.question_generation.factory import get_question_index
-from study_agent.question_generation.quality import validate_generation
+from study_agent.question_generation.quality import validate_question_drafts
 from study_agent.worker import celery_app
 
 
@@ -55,11 +55,11 @@ async def _mark_failed(job_id: UUID, message: str) -> None:
             runs = list(
                 (
                     await session.scalars(
-                        select(AgentRunModel).where(
-                            AgentRunModel.agent_type == "question_generation",
-                            AgentRunModel.subject_id == job.material_id,
-                            AgentRunModel.status == "running",
-                            AgentRunModel.input_summary["job_id"].as_string() == str(job_id),
+                        select(WorkflowRunModel).where(
+                            WorkflowRunModel.agent_type == "question_generation",
+                            WorkflowRunModel.subject_id == job.material_id,
+                            WorkflowRunModel.status == "running",
+                            WorkflowRunModel.input_summary["job_id"].as_string() == str(job_id),
                         )
                     )
                 ).all()
@@ -91,7 +91,8 @@ class QuestionGenerationTask(Task):
         super().on_failure(exc, task_id, args, kwargs, einfo)
 
 
-def _context(chunks: list[DocumentChunk], max_chars: int) -> str:
+def build_generation_context(chunks: list[DocumentChunk], max_chars: int) -> str:
+    """Join chunks within the existing character budget, preserving legacy behavior."""
     sections: list[str] = []
     used = 0
     for chunk in chunks:
@@ -140,9 +141,9 @@ def generate_questions(job_id: str, material_id: str) -> dict[str, object]:
         # failed (which would unblock another job while this one is retrying).
         previous_runs = (
             await session.scalars(
-                select(AgentRunModel).where(
-                    AgentRunModel.status == "running",
-                    AgentRunModel.input_summary["job_id"].as_string() == job_id,
+                select(WorkflowRunModel).where(
+                    WorkflowRunModel.status == "running",
+                    WorkflowRunModel.input_summary["job_id"].as_string() == job_id,
                 )
             )
         ).all()
@@ -157,7 +158,7 @@ def generate_questions(job_id: str, material_id: str) -> dict[str, object]:
         job.started_at = job.started_at or datetime.now(UTC)
         job.error_code = None
         job.error_message = None
-        run = AgentRunModel(
+        run = WorkflowRunModel(
             id=uuid4(),
             agent_type="question_generation",
             subject_type="material",
@@ -165,7 +166,11 @@ def generate_questions(job_id: str, material_id: str) -> dict[str, object]:
             status="running",
             model=settings.llm_model,
             prompt_version=PROMPT_VERSION,
-            input_summary={"job_id": job_id, "target_count": job.target_question_count},
+            input_summary={
+                "job_id": job_id,
+                "target_count": job.target_question_count,
+                "execution_kind": "chain",
+            },
             output_summary={},
             prompt_tokens=0,
             completion_tokens=0,
@@ -186,11 +191,11 @@ def generate_questions(job_id: str, material_id: str) -> dict[str, object]:
         chunks = [_to_chunk(model) for model in chunk_models]
         if not chunks:
             raise ValueError("material does not contain document chunks")
-        context = _context(chunks, settings.question_generation_max_context_chars)
+        context = build_generation_context(chunks, settings.question_generation_max_context_chars)
 
         started = datetime.now(UTC)
         point_batch = await asyncio.to_thread(
-            build_knowledge_point_chain(settings).invoke,
+            create_knowledge_point_chain(settings).invoke,
             {"language": job.language, "context": context},
         )
         available_chunk_ids = {chunk.id for chunk in chunks}
@@ -205,13 +210,13 @@ def generate_questions(job_id: str, material_id: str) -> dict[str, object]:
             raise ValueError("模型未返回包含真实片段来源的知识点")
         point_batch = point_batch.model_copy(update={"items": valid_points})
         session.add(
-            AgentStepModel(
+            WorkflowStepModel(
                 id=uuid4(),
                 run_id=run.id,
                 sequence=1,
                 node_name="extract_knowledge_points",
-                tool_name="langchain_structured_output",
-                input_summary={"chunk_count": len(chunks)},
+                tool_name=None,
+                input_summary={"chunk_count": len(chunks), "execution_kind": "chain"},
                 output_summary={"knowledge_point_count": len(point_batch.items)},
                 status="completed",
                 duration_ms=int((datetime.now(UTC) - started).total_seconds() * 1000),
@@ -223,7 +228,7 @@ def generate_questions(job_id: str, material_id: str) -> dict[str, object]:
 
         started = datetime.now(UTC)
         question_batch = await asyncio.to_thread(
-            build_question_chain(settings).invoke,
+            create_question_generation_chain(settings).invoke,
             {
                 "target_count": job.target_question_count,
                 "allowed_types": ", ".join(job.allowed_types),
@@ -234,7 +239,7 @@ def generate_questions(job_id: str, material_id: str) -> dict[str, object]:
                 "context": context,
             },
         )
-        accepted, rejected = validate_generation(
+        accepted, rejected = validate_question_drafts(
             knowledge_points=point_batch.items,
             questions=question_batch.items,
             chunks=chunks,
@@ -243,13 +248,16 @@ def generate_questions(job_id: str, material_id: str) -> dict[str, object]:
             difficulty_max=job.difficulty_max,
         )
         session.add(
-            AgentStepModel(
+            WorkflowStepModel(
                 id=uuid4(),
                 run_id=run.id,
                 sequence=2,
                 node_name="generate_and_validate_questions",
-                tool_name="langchain_structured_output",
-                input_summary={"target_count": job.target_question_count},
+                tool_name=None,
+                input_summary={
+                    "target_count": job.target_question_count,
+                    "execution_kind": "chain",
+                },
                 output_summary={"accepted": len(accepted), "rejected": len(rejected)},
                 status="completed",
                 duration_ms=int((datetime.now(UTC) - started).total_seconds() * 1000),

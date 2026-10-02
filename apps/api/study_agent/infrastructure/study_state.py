@@ -5,7 +5,9 @@ from redis.asyncio import Redis
 from redis.exceptions import RedisError
 
 
-class RedisStudyStateStore:
+class RedisLearningSessionSnapshotStore:
+    """Redis snapshot adapter, independent from LangGraph checkpoints."""
+
     def __init__(self, *, redis_url: str, ttl_seconds: int) -> None:
         self.redis = Redis.from_url(redis_url, decode_responses=True)
         self.ttl_seconds = ttl_seconds
@@ -41,3 +43,7 @@ class RedisStudyStateStore:
             await self.redis.delete(self._key(session_id))
         except RedisError:
             return
+
+
+# Compatibility alias; remove with the next internal interface cleanup.
+RedisStudyStateStore = RedisLearningSessionSnapshotStore

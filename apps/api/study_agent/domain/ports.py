@@ -121,10 +121,17 @@ class AnswerRecordRepository(Protocol):
     async def list_for_session(self, session_id: UUID) -> Sequence[AnswerRecord]: ...
 
 
-class StudyStateStore(Protocol):
+class LearningSessionSnapshotStore(Protocol):
+    """Disposable learning-session cache; PostgreSQL remains the source of truth."""
+
     async def get(self, session_id: UUID) -> dict[str, object] | None: ...
     async def save(self, session_id: UUID, state: dict[str, object]) -> None: ...
     async def delete(self, session_id: UUID) -> None: ...
+
+
+# Compatibility alias for callers migrating to the explicit snapshot name.
+# Remove in the next internal interface cleanup after downstream consumers migrate.
+StudyStateStore = LearningSessionSnapshotStore
 
 
 class MasteryRepository(Protocol):

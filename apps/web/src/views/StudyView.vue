@@ -285,6 +285,9 @@ onMounted(async () => {
         </div>
         <div class="result-footer">
           <span>当前掌握度 <b>{{ percentage(lastResult.mastery.mastery_score) }}</b> · 下次复习 {{ new Date(lastResult.review_task.due_at).toLocaleDateString('zh-CN') }}</span>
+          <RouterLink v-if="session.mode !== 'mock_exam' || session.status !== 'active'" class="el-button"
+            :to="{ path: '/tutor', query: { knowledge_base_id: session.knowledge_base_id,
+              study_session_id: session.id, answered_question_id: lastResult.question_id } }">继续请教</RouterLink>
           <el-button v-if="session.status === 'active'" type="primary" :icon="ArrowRight" @click="goNext">下一题</el-button>
           <el-button v-else type="primary" @click="goNext">查看本轮总结</el-button>
         </div>

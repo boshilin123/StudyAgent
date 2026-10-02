@@ -69,7 +69,9 @@ class MaterialModel(TimestampMixin, Base):
     error_message: Mapped[str | None] = mapped_column(Text)
 
 
-class AgentRunModel(Base):
+class WorkflowRunModel(Base):
+    """Workflow trace mapped to the historical agent_runs physical table."""
+
     __tablename__ = "agent_runs"
 
     id: Mapped[UUID] = mapped_column(primary_key=True, default=uuid4)
@@ -264,7 +266,8 @@ class IngestionJobModel(Base):
     )
 
 
-class AgentStepModel(Base):
+class WorkflowStepModel(Base):
+    """Workflow step trace; a row alone does not imply Agent Tool Calling."""
     __tablename__ = "agent_steps"
     __table_args__ = (UniqueConstraint("run_id", "sequence", name="uq_agent_step_sequence"),)
 
@@ -409,3 +412,8 @@ class ReviewTaskModel(Base):
     last_quality: Mapped[int] = mapped_column(Integer, nullable=False)
     status: Mapped[str] = mapped_column(String(20), nullable=False)
     updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+
+
+# Compatibility aliases; remove with the next internal interface cleanup.
+AgentRunModel = WorkflowRunModel
+AgentStepModel = WorkflowStepModel

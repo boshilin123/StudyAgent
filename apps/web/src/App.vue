@@ -15,6 +15,7 @@ const navItems = [
   { path: '/knowledge-bases', label: '知识库', icon: Collection },
   { path: '/questions', label: '题库', icon: Reading },
   { path: '/study', label: '学习工作台', icon: Reading },
+  { path: '/tutor', label: '学习辅导', icon: Reading },
   { path: '/progress', label: '学习进度', icon: DataAnalysis },
 ]
 

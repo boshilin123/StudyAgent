@@ -41,6 +41,7 @@ jobs:
       - run: python -m pip install -r requirements-dev.lock && python -m pip install --no-deps -e .
       - run: python -m pip check
       - run: python -m alembic upgrade head
+      - run: python -m study_agent.infrastructure.checkpointer
       - run: python -m pytest --cov=study_agent --cov-report=term-missing --cov-fail-under=80
       - run: python -m ruff check --no-cache .
       - run: python -m mypy --no-incremental study_agent
@@ -74,6 +75,9 @@ jobs:
       - run: docker compose config --quiet
       - run: docker compose -f compose.production.yaml config --quiet
       - run: docker compose up -d --build --wait --wait-timeout 180
+      - run: docker compose exec -T api python -m study_agent.infrastructure.checkpointer
+      - run: docker compose restart api
+      - run: docker compose up -d --no-deps --wait --wait-timeout 180 api
       - run: curl --fail http://localhost:58000/api/health/ready
       - run: docker compose down
         if: always()

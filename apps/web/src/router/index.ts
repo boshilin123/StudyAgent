@@ -28,6 +28,12 @@ const router = createRouter({
       meta: { title: '学习工作台', description: '诊断、练习、复习和模拟考试' },
     },
     {
+      path: '/tutor',
+      name: 'tutor',
+      component: () => import('@/views/TutorView.vue'),
+      meta: { title: '学习辅导', description: '资料问答、答后追问和薄弱点辅导' },
+    },
+    {
       path: '/progress',
       name: 'progress',
       component: () => import('@/views/ProgressView.vue'),

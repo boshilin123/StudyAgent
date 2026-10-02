@@ -4,29 +4,15 @@ from typing import Any, cast
 from langchain_core.output_parsers import PydanticOutputParser
 from langchain_core.prompts import ChatPromptTemplate
 from langchain_core.runnables import Runnable
-from langchain_openai import ChatOpenAI
-from pydantic import SecretStr
 
 from study_agent.config import Settings
+from study_agent.llm.models import get_chat_model
 from study_agent.question_generation.schemas import KnowledgePointBatch, QuestionBatch
 
 PROMPT_VERSION = "p3-v1"
 
 
-def _model(settings: Settings) -> ChatOpenAI:
-    if not settings.llm_base_url or not settings.llm_model:
-        raise ValueError("未配置 LLM_BASE_URL 或 LLM_MODEL")
-    return ChatOpenAI(
-        base_url=settings.llm_base_url,
-        api_key=SecretStr(settings.llm_api_key or "not-required"),
-        model=settings.llm_model,
-        temperature=settings.llm_temperature,
-        timeout=settings.llm_timeout_seconds,
-        extra_body={"enable_thinking": settings.llm_enable_thinking},
-    )
-
-
-def build_knowledge_point_chain(
+def create_knowledge_point_chain(
     settings: Settings,
 ) -> Runnable[dict[str, Any], KnowledgePointBatch]:
     parser = PydanticOutputParser(pydantic_object=KnowledgePointBatch)
@@ -44,7 +30,7 @@ def build_knowledge_point_chain(
             ),
         ]
     ).partial(format_instructions=parser.get_format_instructions())
-    model = _model(settings)
+    model = get_chat_model(settings, purpose="question_generation")
     if settings.llm_structured_output_method == "parser":
         chain = prompt | model | parser
     else:
@@ -54,7 +40,7 @@ def build_knowledge_point_chain(
     return cast(Runnable[dict[str, Any], KnowledgePointBatch], chain)
 
 
-def build_question_chain(settings: Settings) -> Runnable[dict[str, Any], QuestionBatch]:
+def create_question_generation_chain(settings: Settings) -> Runnable[dict[str, Any], QuestionBatch]:
     parser = PydanticOutputParser(pydantic_object=QuestionBatch)
     prompt = ChatPromptTemplate.from_messages(
         [
@@ -74,7 +60,7 @@ def build_question_chain(settings: Settings) -> Runnable[dict[str, Any], Questio
             ),
         ]
     ).partial(format_instructions=parser.get_format_instructions())
-    model = _model(settings)
+    model = get_chat_model(settings, purpose="question_generation")
     if settings.llm_structured_output_method == "parser":
         chain = prompt | model | parser
     else:
@@ -86,3 +72,8 @@ def build_question_chain(settings: Settings) -> Runnable[dict[str, Any], Questio
 
 def serialize_knowledge_points(batch: KnowledgePointBatch) -> str:
     return json.dumps([item.model_dump(mode="json") for item in batch.items], ensure_ascii=False)
+
+
+# Temporary source compatibility during the v1 naming transition.
+build_knowledge_point_chain = create_knowledge_point_chain
+build_question_chain = create_question_generation_chain

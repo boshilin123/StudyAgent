@@ -12,7 +12,7 @@ from study_agent.config import Settings
 from study_agent.domain.errors import DomainError
 from study_agent.domain.models import DocumentChunk, QuestionSource
 from study_agent.infrastructure.readiness import get_readiness_probes
-from study_agent.infrastructure.study_state import RedisStudyStateStore
+from study_agent.infrastructure.study_state import RedisLearningSessionSnapshotStore
 from study_agent.main import app, create_app
 from tests.fakes import (
     FakeDocumentIndex,
@@ -130,12 +130,12 @@ async def test_delete_only_disables_questions_losing_every_source() -> None:
 
 
 @pytest.mark.asyncio
-async def test_corrupt_checkpoint_is_cache_miss() -> None:
+async def test_corrupt_learning_snapshot_is_cache_miss() -> None:
     class RedisStub:
         async def get(self, _: str) -> str:
             return "{invalid json"
 
-    store = RedisStudyStateStore(redis_url="redis://localhost", ttl_seconds=10)
+    store = RedisLearningSessionSnapshotStore(redis_url="redis://localhost", ttl_seconds=10)
     store.redis = RedisStub()  # type: ignore[assignment]
     assert await store.get(uuid4()) is None
 

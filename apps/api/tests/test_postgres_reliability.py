@@ -440,7 +440,7 @@ async def test_generation_retry_deduplicates_and_completed_redelivery_is_noop(
     seeded_database: SimpleNamespace,
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    from study_agent.infrastructure.models import AgentRunModel, QuestionGenerationJobModel
+    from study_agent.infrastructure.models import QuestionGenerationJobModel, WorkflowRunModel
     from study_agent.question_generation import tasks
     from study_agent.question_generation.schemas import (
         GeneratedQuestionDraft,
@@ -488,8 +488,8 @@ async def test_generation_retry_deduplicates_and_completed_redelivery_is_noop(
             _env_file=None, database_url=data.url, llm_model="mock", llm_base_url="http://mock/v1"
         ),
     )
-    monkeypatch.setattr(tasks, "build_knowledge_point_chain", lambda _: point_chain)
-    monkeypatch.setattr(tasks, "build_question_chain", lambda _: question_chain)
+    monkeypatch.setattr(tasks, "create_knowledge_point_chain", lambda _: point_chain)
+    monkeypatch.setattr(tasks, "create_question_generation_chain", lambda _: question_chain)
     monkeypatch.setattr(tasks, "get_question_index", lambda: index)
     job_id = uuid4()
     async with data.factory() as session:
@@ -515,7 +515,9 @@ async def test_generation_retry_deduplicates_and_completed_redelivery_is_noop(
     result = await asyncio.to_thread(tasks.generate_questions.run, str(job_id), str(data.material))
     assert result["generated_count"] == 1
     # A repeated completed delivery must not invoke either model chain again.
-    monkeypatch.setattr(tasks, "build_question_chain", lambda _: pytest.fail("repeated LLM call"))
+    monkeypatch.setattr(
+        tasks, "create_question_generation_chain", lambda _: pytest.fail("repeated LLM call")
+    )
     assert (
         await asyncio.to_thread(tasks.generate_questions.run, str(job_id), str(data.material))
         == result
@@ -532,7 +534,7 @@ async def test_generation_retry_deduplicates_and_completed_redelivery_is_noop(
         runs = list(
             (
                 await session.scalars(
-                    select(AgentRunModel).where(AgentRunModel.subject_id == data.material)
+                    select(WorkflowRunModel).where(WorkflowRunModel.subject_id == data.material)
                 )
             ).all()
         )

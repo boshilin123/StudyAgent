@@ -8,7 +8,7 @@ from fastapi.testclient import TestClient
 
 from study_agent.api.dependencies import (
     get_question_generation_dispatcher,
-    get_question_vector_index,
+    get_question_index,
     get_uow,
 )
 from study_agent.config import Settings
@@ -36,7 +36,7 @@ def p3_context(monkeypatch: pytest.MonkeyPatch) -> Iterator[tuple[TestClient, Fa
     )
     app.dependency_overrides[get_uow] = override_uow
     app.dependency_overrides[get_question_generation_dispatcher] = lambda: dispatcher
-    app.dependency_overrides[get_question_vector_index] = lambda: question_index
+    app.dependency_overrides[get_question_index] = lambda: question_index
     with TestClient(app) as client:
         yield client, uow
     app.dependency_overrides.clear()

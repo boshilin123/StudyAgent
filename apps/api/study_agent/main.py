@@ -11,6 +11,7 @@ from fastapi.responses import JSONResponse
 from study_agent.api.errors import register_exception_handlers
 from study_agent.api.router import api_router
 from study_agent.config import get_settings
+from study_agent.infrastructure.checkpointer import open_tutor_checkpointer
 from study_agent.logging import configure_logging
 
 settings = get_settings()
@@ -19,9 +20,10 @@ logger = structlog.get_logger(__name__)
 
 
 @asynccontextmanager
-async def lifespan(_: FastAPI) -> AsyncIterator[None]:
+async def lifespan(app: FastAPI) -> AsyncIterator[None]:
     logger.info("application_started", environment=settings.app_env)
-    yield
+    async with open_tutor_checkpointer(app):
+        yield
     logger.info("application_stopped")
 
 

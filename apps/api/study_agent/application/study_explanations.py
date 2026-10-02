@@ -4,11 +4,11 @@ from typing import Any, cast
 from langchain_core.output_parsers import PydanticOutputParser
 from langchain_core.prompts import ChatPromptTemplate
 from langchain_core.runnables import Runnable
-from langchain_openai import ChatOpenAI
-from pydantic import BaseModel, Field, SecretStr
+from pydantic import BaseModel, Field
 
 from study_agent.config import Settings
 from study_agent.domain.models import Question
+from study_agent.llm.models import get_chat_model
 
 
 class ExplanationDraft(BaseModel):
@@ -65,14 +65,7 @@ class LangChainStudyExplanationGenerator:
                 ),
             ]
         ).partial(format_instructions=parser.get_format_instructions())
-        model = ChatOpenAI(
-            base_url=settings.llm_base_url,
-            api_key=SecretStr(settings.llm_api_key or "not-required"),
-            model=settings.llm_model or "",
-            temperature=settings.llm_temperature,
-            timeout=settings.llm_timeout_seconds,
-            extra_body={"enable_thinking": settings.llm_enable_thinking},
-        )
+        model = get_chat_model(settings, purpose="study_explanation")
         chain = prompt | model | parser
         return cast(Runnable[dict[str, Any], ExplanationDraft], chain)
 

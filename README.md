@@ -1,5 +1,24 @@
 # StudyAgent
 
+## LangChain v1 与学习辅导升级
+
+本轮新增 LangChain v1 依赖锁、统一模型入口、课程命名对齐和学习辅导单 Agent。辅导页面位于 `/tutor`，支持资料问答、答后追问、学习进度及错题分析；工具只读，最终回复需要取证与引用校验。完整测试结果见本轮验收报告，历史 P8/P9/P10 结果不替代新版本验收。
+
+角色分工见 [四个 Subagent 实施分工](docs/技术方案/四个Subagent实施分工.md)，学习入口见 [课程知识点与源码导读](docs/技术方案/课程知识点与源码导读.md)，接口见 [学习辅导接口](docs/接口文档/学习辅导接口.md)。
+
+辅导模型可通过 `TUTOR_LLM_*` 独立配置，留空则继承 `LLM_*`。它必须支持工具调用及所选结构化输出组合；旧出题 parser 可用不代表模型能用于辅导。
+
+依赖升级后需要重建应用镜像。数据库正常迁移后，首次启用辅导须显式初始化 PostgreSQL 检查点：
+
+```powershell
+docker compose build api worker web
+docker compose run --rm api alembic upgrade head
+docker compose run --rm api python -m study_agent.infrastructure.checkpointer
+docker compose up -d api worker web
+```
+
+该初始化只管理框架检查点表。API 启动仅探测，不自动建表；检查点不可用时辅导明确报错，原学习业务继续运行。
+
 ## P10 可靠性加固
 
 已修复填空语义符号丢失、任务派发失败阻塞、并发提交与知识点统计竞争、资料来源失效及旧向量残留。
@@ -16,7 +35,7 @@ P9 增加了 GitHub Actions 干净环境验证和全面真实链路验收，覆�
 
 ## 技术栈
 
-- 后端：Python 3.12、FastAPI、SQLAlchemy、Alembic、Celery、LangChain。
+- 后端：Python 3.12、FastAPI、SQLAlchemy、Alembic、Celery、LangChain v1、LangGraph。
 - 前端：Vue 3、TypeScript、Vite、Pinia、Element Plus。
 - 数据：PostgreSQL、Milvus、Redis、S3 兼容对象存储（本地使用 RustFS）。
 - 部署：Docker Compose。
@@ -40,6 +59,9 @@ compose.yaml    开发环境服务编排
 ```powershell
 Copy-Item .env.example .env
 docker compose up -d --wait --wait-timeout 180
+docker compose exec -T api python -m study_agent.infrastructure.checkpointer
+docker compose restart api
+docker compose up -d --no-deps --wait --wait-timeout 180 api
 ```
 
 启动后：
@@ -65,6 +87,8 @@ powershell.exe -NoProfile -ExecutionPolicy Bypass -File D:\Study\StudyAgent\scri
 ```
 
 脚本默认后台启动全部开发服务，等待容器及 Web/API 就绪后自动打开浏览器；可以关闭终端，服务仍会运行。首次运行会从 `.env.example` 创建 `.env`，缺少镜像时自动构建，真实模型功能需填写密钥。页面端口取实际 Compose 配置（默认示例为 `55173`）。
+
+首次启用辅导时，还须执行上述检查点初始化、API 重启及等待命令；后续运行无需重复初始化。`dev.ps1` 负责服务启动，检查点仍通过显式部署命令管理。
 
 可选参数：`-NoBrowser` 不自动打开页面；`-FollowLogs` 仅跟踪 API、Worker 和 Web 日志；修改依赖或 Dockerfile 后使用 `-Rebuild` 重建镜像。直接用 Compose 后台启动则不会自动打开页面：
 
@@ -101,7 +125,7 @@ python -m venv .venv
 .\.venv\Scripts\Activate.ps1
 python -m pip install -r requirements-dev.lock
 python -m pip install --no-deps -e .
-uvicorn study_agent.main:app --reload
+uvicorn study_agent.main:app --loop study_agent.runtime:create_event_loop --reload
 ```
 
 前端：
@@ -128,8 +152,9 @@ npm.cmd run dev
 - 单选、填空、判断题的确定性判分，以及会话恢复、幂等提交、掌握度和复习任务。
 - 基于薄弱度、复习到期、历史新鲜度、难度和题型多样性的可解释自适应选题。
 - LangChain 原文引用讲解、失败降级和讲解结果持久化。
-- Redis 学习运行态 checkpoint；缓存丢失时从 PostgreSQL 自动重建。
+- Redis 学习会话快照；缓存丢失时从 PostgreSQL 自动重建，与辅导图检查点独立。
 - Vue 首页、知识库与资料管理、题库审核、学习工作台、进度与复习页面。
+- 辅导会话、四个只读工具、真实工具调用循环、来源验证、消息幂等与 PostgreSQL 检查点。
 - 前端支持资料处理状态轮询、题目筛选/编辑/启停、三类客观题作答、判题讲解与来源展示。
 - 活动学习会话写入浏览器本地状态，并通过后端 PostgreSQL/Redis 恢复；刷新后可继续作答。
 - PostgreSQL、Milvus、Redis、RustFS、API、Worker 和 Web 的 Compose 编排。

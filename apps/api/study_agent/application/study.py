@@ -14,7 +14,11 @@ from study_agent.domain.models import (
     SessionQuestion,
     StudySession,
 )
-from study_agent.domain.ports import StudyExplanationGenerator, StudyStateStore, UnitOfWork
+from study_agent.domain.ports import (
+    LearningSessionSnapshotStore,
+    StudyExplanationGenerator,
+    UnitOfWork,
+)
 
 
 @dataclass(frozen=True, slots=True)
@@ -102,7 +106,7 @@ class StudyService:
         question_types: list[str],
         difficulty_min: int,
         difficulty_max: int,
-        state_store: StudyStateStore | None = None,
+        state_store: LearningSessionSnapshotStore | None = None,
     ) -> SessionView:
         knowledge_base = await uow.knowledge_bases.get(knowledge_base_id)
         if knowledge_base is None:
@@ -186,7 +190,7 @@ class StudyService:
         self,
         uow: UnitOfWork,
         session_id: UUID,
-        state_store: StudyStateStore | None = None,
+        state_store: LearningSessionSnapshotStore | None = None,
     ) -> SessionView:
         study_session = await uow.study_sessions.get(session_id)
         if study_session is None:
@@ -208,7 +212,7 @@ class StudyService:
         answer: object,
         elapsed_seconds: int,
         explanation_generator: StudyExplanationGenerator | None = None,
-        state_store: StudyStateStore | None = None,
+        state_store: LearningSessionSnapshotStore | None = None,
     ) -> AnswerResult:
         # This also serializes the first use of an ID across different sessions.
         await uow.lock(submission_id)
@@ -338,7 +342,7 @@ class StudyService:
         self,
         uow: UnitOfWork,
         session_id: UUID,
-        state_store: StudyStateStore | None = None,
+        state_store: LearningSessionSnapshotStore | None = None,
     ) -> SessionView:
         study_session = await uow.study_sessions.get_for_update(session_id)
         if study_session is None:
@@ -456,7 +460,7 @@ class StudyService:
         session_id: UUID,
         question_id: UUID,
         answer: object,
-        state_store: StudyStateStore | None = None,
+        state_store: LearningSessionSnapshotStore | None = None,
     ) -> AnswerResult:
         if (
             record.session_id != session_id
@@ -494,7 +498,7 @@ class StudyService:
         uow: UnitOfWork,
         study_session: StudySession,
         current_question: Question | None,
-        state_store: StudyStateStore | None,
+        state_store: LearningSessionSnapshotStore | None,
     ) -> None:
         if state_store is None:
             return

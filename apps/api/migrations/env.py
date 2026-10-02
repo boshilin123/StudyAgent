@@ -5,6 +5,7 @@ from sqlalchemy import pool
 from sqlalchemy.ext.asyncio import async_engine_from_config
 
 import study_agent.infrastructure.models  # noqa: F401
+import study_agent.infrastructure.tutoring_models  # noqa: F401
 from study_agent.config import get_settings
 from study_agent.infrastructure.database import Base
 

@@ -44,7 +44,22 @@ class Settings(BaseSettings):
     llm_temperature: float = 0.1
     llm_timeout_seconds: float = 60.0
     llm_enable_thinking: bool = False
+    llm_send_enable_thinking: bool = True
     llm_structured_output_method: Literal["parser", "function_calling", "json_schema"] = "parser"
+    tutor_llm_base_url: str | None = None
+    tutor_llm_api_key: str | None = None
+    tutor_llm_model: str | None = None
+    tutor_llm_temperature: float | None = Field(default=None, ge=0, le=2)
+    tutor_llm_timeout_seconds: float | None = Field(default=None, gt=0)
+    tutor_llm_enable_thinking: bool | None = None
+    tutor_llm_send_enable_thinking: bool | None = None
+    tutor_enabled: bool = True
+    tutor_max_tool_calls: int = Field(default=6, ge=1, le=30)
+    tutor_max_tool_result_chars: int = Field(default=16000, ge=100, le=100000)
+    tutor_timeout_seconds: int = Field(default=90, ge=1, le=600)
+    tutor_max_messages: int = Field(default=20, ge=1, le=200)
+    tutor_llm_max_output_tokens: int = Field(default=1500, ge=100, le=16000)
+    tutor_checkpointer_db_url: str | None = None
     embedding_base_url: str | None = None
     embedding_api_key: str | None = None
     embedding_model: str | None = None
@@ -67,6 +82,17 @@ class Settings(BaseSettings):
     @classmethod
     def empty_token_is_none(cls, value: object) -> object:
         return None if value == "" else value
+
+    @field_validator(
+        "tutor_llm_base_url",
+        "tutor_llm_api_key",
+        "tutor_llm_model",
+        "tutor_checkpointer_db_url",
+        mode="before",
+    )
+    @classmethod
+    def empty_tutor_override_is_none(cls, value: object) -> object:
+        return None if isinstance(value, str) and not value.strip() else value
 
     @model_validator(mode="after")
     def require_production_access_control(self) -> "Settings":

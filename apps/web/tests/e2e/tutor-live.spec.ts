@@ -1,0 +1,23 @@
+import { expect, test } from '@playwright/test'
+
+test('实际Vue→HTTP API→create_agent→PG/Milvus→刷新和归档，无route mocks', async ({ page }) => {
+  test.skip(process.env.RUN_LIVE_BROWSER !== '1', 'Requires isolated acceptance server on 58001')
+  await page.goto('/tutor')
+  await page.getByRole('button', { name: '新建辅导会话' }).click()
+  await expect(page.getByRole('button', { name: '归档会话' })).toBeVisible()
+  await page.getByRole('textbox', { name: '辅导问题', exact: true }).fill('请用资料解释TCP')
+  await page.getByRole('button', { name: '发送问题' }).click()
+  await expect(page.locator('.tutor-message.assistant')).toContainText('这是解释性回答。')
+  await page.getByText('查看资料依据（1）', { exact: true }).click()
+  await expect(page.getByText('TCP测试来源', { exact: true })).toBeVisible()
+  await page.getByRole('textbox', { name: '辅导问题', exact: true }).fill('再解释第二个')
+  await page.getByRole('button', { name: '发送问题' }).click()
+  await expect(page.locator('.tutor-message.assistant')).toHaveCount(2)
+  await page.reload()
+  await expect(page.locator('.tutor-message.assistant')).toHaveCount(2)
+  expect(await page.evaluate(() => localStorage.getItem('study-agent-tutor-pending-message'))).toBeNull()
+  await page.getByRole('button', { name: '归档会话' }).click()
+  await expect(page.getByText('会话已归档，历史仍可查看。请新建会话继续辅导。')).toBeVisible()
+  await expect(page.getByRole('button', { name: '发送问题' })).toHaveCount(0)
+  await page.screenshot({ path: '../../tmp/upgrade-acceptance/browser-live.png', fullPage: true })
+})

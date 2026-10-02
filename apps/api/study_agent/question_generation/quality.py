@@ -15,7 +15,7 @@ def _normalize(value: str) -> str:
     return re.sub(r"\s+", "", value).lower()
 
 
-def validate_generation(
+def validate_question_drafts(
     *,
     knowledge_points: list[KnowledgePointDraft],
     questions: list[GeneratedQuestionDraft],
@@ -70,3 +70,7 @@ def validate_generation(
             seen_stems.add(normalized_stem)
             accepted.append(question)
     return accepted, rejected
+
+
+# Compatibility alias; remove with the next internal interface cleanup.
+validate_generation = validate_question_drafts

@@ -5,11 +5,11 @@ import pytest
 from fastapi.testclient import TestClient
 
 from study_agent.api.dependencies import (
+    get_document_index,
     get_ingestion_dispatcher,
     get_object_storage,
-    get_question_vector_index,
+    get_question_index,
     get_uow,
-    get_vector_index,
 )
 from study_agent.main import app
 from tests.fakes import (
@@ -37,8 +37,8 @@ def api_context() -> Iterator[tuple[TestClient, FakeUnitOfWork, FakeObjectStorag
     app.dependency_overrides[get_uow] = override_uow
     app.dependency_overrides[get_object_storage] = override_storage
     app.dependency_overrides[get_ingestion_dispatcher] = lambda: dispatcher
-    app.dependency_overrides[get_vector_index] = lambda: document_index
-    app.dependency_overrides[get_question_vector_index] = FakeQuestionIndex
+    app.dependency_overrides[get_document_index] = lambda: document_index
+    app.dependency_overrides[get_question_index] = FakeQuestionIndex
     with TestClient(app) as client:
         yield client, uow, storage
     app.dependency_overrides.clear()

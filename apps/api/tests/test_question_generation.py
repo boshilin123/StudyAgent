@@ -5,7 +5,7 @@ import pytest
 from pydantic import ValidationError
 
 from study_agent.domain.models import DocumentChunk
-from study_agent.question_generation.quality import validate_generation
+from study_agent.question_generation.quality import validate_question_drafts
 from study_agent.question_generation.schemas import (
     GeneratedQuestionDraft,
     KnowledgePointDraft,
@@ -78,7 +78,7 @@ def test_three_question_types_pass_grounding_gate() -> None:
             source_quotes=["TCP 通过三次握手建立连接"],
         ),
     ]
-    accepted, rejected = validate_generation(
+    accepted, rejected = validate_question_drafts(
         knowledge_points=[point],
         questions=questions,
         chunks=[chunk],
@@ -110,7 +110,7 @@ def test_grounding_gate_rejects_fabricated_quote() -> None:
         source_chunk_ids=[chunk.id],
         source_quotes=["TCP 通过五次握手建立连接"],
     )
-    accepted, rejected = validate_generation(
+    accepted, rejected = validate_question_drafts(
         knowledge_points=[point],
         questions=[question],
         chunks=[chunk],
