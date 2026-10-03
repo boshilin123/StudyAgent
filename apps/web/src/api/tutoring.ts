@@ -22,6 +22,7 @@ export interface TutorConversation {
   study_session_id: string | null
   answered_question_id: string | null
   status: string
+  title?: string | null
   created_at: string
 }
 
@@ -107,4 +108,12 @@ export async function getTutorTurn(conversationId: string, turnId: string) {
 
 export async function archiveTutorConversation(id: string) {
   return (await apiClient.post<TutorConversation>(`/tutor/conversations/${id}/archive`)).data
+}
+
+export async function renameTutorConversation(id: string, title: string) {
+  return (await apiClient.patch<TutorConversation>(`/tutor/conversations/${id}`, { title })).data
+}
+
+export async function deleteTutorConversation(id: string) {
+  await apiClient.delete(`/tutor/conversations/${id}`)
 }

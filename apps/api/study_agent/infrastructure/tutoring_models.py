@@ -25,6 +25,7 @@ class TutorConversationModel(Base):
     last_committed_checkpoint_id: Mapped[str | None] = mapped_column(String(100))
     graph_version: Mapped[str] = mapped_column(String(50), default="tutor-v1")
     status: Mapped[str] = mapped_column(String(20), default="active")
+    title: Mapped[str | None] = mapped_column(String(100))
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
     updated_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now(), onupdate=func.now()

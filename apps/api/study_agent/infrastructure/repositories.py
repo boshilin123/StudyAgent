@@ -5,6 +5,7 @@ from uuid import UUID
 
 from sqlalchemy import delete, func, select
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.sql.elements import ColumnElement
 
 from study_agent.domain.models import (
     AnswerRecord,
@@ -102,6 +103,7 @@ def _question_job_from_model(model: QuestionGenerationJobModel) -> QuestionGener
         language=model.language,
         generated_count=model.generated_count,
         rejected_count=model.rejected_count,
+        rejected_candidates=model.rejected_candidates,
         error_code=model.error_code,
         error_message=model.error_message,
         started_at=model.started_at,
@@ -224,8 +226,15 @@ class SqlAlchemyKnowledgeBaseRepository:
                 func.count(func.distinct(QuestionModel.id)).label("question_count"),
             )
             .outerjoin(MaterialModel, MaterialModel.knowledge_base_id == KnowledgeBaseModel.id)
-            .outerjoin(QuestionModel, QuestionModel.knowledge_base_id == KnowledgeBaseModel.id)
-            .where(KnowledgeBaseModel.id == knowledge_base_id)
+            .outerjoin(
+                QuestionModel,
+                (QuestionModel.knowledge_base_id == KnowledgeBaseModel.id)
+                & (QuestionModel.status != "deleted"),
+            )
+            .where(
+                KnowledgeBaseModel.id == knowledge_base_id,
+                KnowledgeBaseModel.status != "deleted",
+            )
             .group_by(KnowledgeBaseModel.id)
         )
         row = (await self.session.execute(stmt)).one_or_none()
@@ -238,7 +247,7 @@ class SqlAlchemyKnowledgeBaseRepository:
     async def list(
         self, *, page: int, page_size: int, status: str | None, keyword: str | None
     ) -> tuple[Sequence[KnowledgeBase], int]:
-        filters = []
+        filters = [KnowledgeBaseModel.status != "deleted"]
         if status is not None:
             filters.append(KnowledgeBaseModel.status == status)
         if keyword:
@@ -254,7 +263,10 @@ class SqlAlchemyKnowledgeBaseRepository:
         )
         question_count = (
             select(func.count(QuestionModel.id))
-            .where(QuestionModel.knowledge_base_id == KnowledgeBaseModel.id)
+            .where(
+                QuestionModel.knowledge_base_id == KnowledgeBaseModel.id,
+                QuestionModel.status != "deleted",
+            )
             .correlate(KnowledgeBaseModel)
             .scalar_subquery()
         )
@@ -458,6 +470,7 @@ class SqlAlchemyQuestionGenerationJobRepository:
             language=job.language,
             generated_count=job.generated_count,
             rejected_count=job.rejected_count,
+            rejected_candidates=job.rejected_candidates,
             error_code=job.error_code,
             error_message=job.error_message,
             started_at=job.started_at,
@@ -471,6 +484,15 @@ class SqlAlchemyQuestionGenerationJobRepository:
     async def get(self, job_id: UUID) -> QuestionGenerationJob | None:
         model = await self.session.get(QuestionGenerationJobModel, job_id)
         return _question_job_from_model(model) if model else None
+
+    async def list_for_material(self, material_id: UUID) -> Sequence[QuestionGenerationJob]:
+        models = await self.session.scalars(
+            select(QuestionGenerationJobModel)
+            .where(QuestionGenerationJobModel.material_id == material_id)
+            .order_by(QuestionGenerationJobModel.created_at.desc(), QuestionGenerationJobModel.id)
+            .limit(5)
+        )
+        return [_question_job_from_model(model) for model in models]
 
     async def has_running_for_material(self, material_id: UUID) -> bool:
         stmt = (
@@ -575,7 +597,12 @@ class SqlAlchemyQuestionRepository:
         page: int,
         page_size: int,
     ) -> tuple[Sequence[Question], int]:
-        filters = []
+        filters: list[ColumnElement[bool]] = [
+            QuestionModel.status != "deleted",
+            QuestionModel.knowledge_base_id.in_(
+                select(KnowledgeBaseModel.id).where(KnowledgeBaseModel.status != "deleted")
+            )
+        ]
         if knowledge_base_id:
             filters.append(QuestionModel.knowledge_base_id == knowledge_base_id)
         if question_type:

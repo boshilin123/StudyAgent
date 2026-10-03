@@ -436,9 +436,14 @@ async def test_rechunk_cleans_sources_and_retryable_stale_vectors(
 
 
 @pytest.mark.asyncio
+@pytest.mark.parametrize("target_count,expected_status", [(1, "completed"), (6, "partial")])
+@pytest.mark.parametrize("deletion_mode", ["none", "before_retry", "during_index"])
 async def test_generation_retry_deduplicates_and_completed_redelivery_is_noop(
     seeded_database: SimpleNamespace,
     monkeypatch: pytest.MonkeyPatch,
+    target_count: int,
+    expected_status: str,
+    deletion_mode: str,
 ) -> None:
     from study_agent.infrastructure.models import QuestionGenerationJobModel, WorkflowRunModel
     from study_agent.question_generation import tasks
@@ -469,15 +474,42 @@ async def test_generation_retry_deduplicates_and_completed_redelivery_is_noop(
         source_quotes=["TCP测试来源"],
     )
     point_chain = SimpleNamespace(invoke=lambda _: KnowledgePointBatch(items=[point]))
-    question_chain = SimpleNamespace(invoke=lambda _: QuestionBatch(items=[question]))
+    invalid = question.model_copy(
+        update={"stem": "错误引文候选题", "source_quotes": ["不存在的引文"]}
+    )
+    question_chain = SimpleNamespace(invoke=lambda _: QuestionBatch(items=[question, invalid]))
 
     class IndexStub:
         fail_once = True
+
+        def __init__(self):
+            self.deleted = []
+
+        async def delete_questions(self, ids):
+            self.deleted.extend(ids)
 
         async def upsert(self, records):
             if self.fail_once:
                 self.fail_once = False
                 raise ConnectionError("simulated question vector outage")
+            if deletion_mode == "during_index":
+                # The worker runs in its own thread/loop; use independent connections
+                # to simulate an API deletion without borrowing the fixture's pool.
+                deletion_engine = create_async_engine(data.url)
+                deletion_factory = async_sessionmaker(deletion_engine, expire_on_commit=False)
+                try:
+                    async with deletion_factory() as session:
+                        generated = await session.scalar(
+                            select(QuestionModel).where(
+                                QuestionModel.knowledge_base_id == data.kb,
+                                QuestionModel.stem == question.stem,
+                            )
+                        )
+                        await QuestionService().delete(
+                            SqlAlchemyUnitOfWork(session), FakeQuestionIndex(), generated.id
+                        )
+                finally:
+                    await deletion_engine.dispose()
             return [record["id"] for record in records]
 
     index = IndexStub()
@@ -500,7 +532,7 @@ async def test_generation_retry_deduplicates_and_completed_redelivery_is_noop(
                 status="pending",
                 stage="queued",
                 progress=0,
-                target_question_count=1,
+                target_question_count=target_count,
                 allowed_types=["true_false"],
                 difficulty_min=1,
                 difficulty_max=5,
@@ -512,8 +544,21 @@ async def test_generation_retry_deduplicates_and_completed_redelivery_is_noop(
         await session.commit()
     with pytest.raises((ConnectionError, Retry)):
         await asyncio.to_thread(tasks.generate_questions.run, str(job_id), str(data.material))
+    if deletion_mode == "before_retry":
+        async with data.factory() as session:
+            generated = await session.scalar(
+                select(QuestionModel).where(
+                    QuestionModel.knowledge_base_id == data.kb,
+                    QuestionModel.stem == question.stem,
+                )
+            )
+            await QuestionService().delete(
+                SqlAlchemyUnitOfWork(session), FakeQuestionIndex(), generated.id
+            )
+        expected_status = "partial"
     result = await asyncio.to_thread(tasks.generate_questions.run, str(job_id), str(data.material))
-    assert result["generated_count"] == 1
+    assert result["generated_count"] == (0 if deletion_mode == "before_retry" else 1)
+    assert result["rejected_count"] == (2 if deletion_mode == "before_retry" else 1)
     # A repeated completed delivery must not invoke either model chain again.
     monkeypatch.setattr(
         tasks, "create_question_generation_chain", lambda _: pytest.fail("repeated LLM call")
@@ -538,7 +583,24 @@ async def test_generation_retry_deduplicates_and_completed_redelivery_is_noop(
                 )
             ).all()
         )
-        assert sorted(run.status for run in runs) == ["completed", "failed"]
+        assert sorted(run.status for run in runs) == sorted([expected_status, "failed"])
+        job = await session.get(QuestionGenerationJobModel, job_id)
+        assert job is not None and job.status == expected_status
+        assert len(job.rejected_candidates) == job.rejected_count
+        candidate = job.rejected_candidates[0]
+        assert candidate["reason"] == "引文无法在原文片段中匹配"
+        assert candidate["question"]["stem"] == invalid.stem
+        assert candidate["question"]["source_quotes"] == ["不存在的引文"]
+        if deletion_mode == "before_retry":
+            assert job.rejected_candidates[1]["reason"] == "相同题目已被删除，本次不重新入库"
+        if deletion_mode != "none":
+            removed = next(item for item in questions if item.stem == question.stem)
+            assert removed.status == "deleted" and removed.vector_id is None
+            if deletion_mode == "during_index":
+                assert index.deleted == [removed.id]
+        if expected_status == "partial":
+            assert job.error_code == "QUESTION_GENERATION_PARTIAL"
+            assert "引文无法在原文片段中匹配" in (job.error_message or "")
 
 
 @pytest.mark.asyncio

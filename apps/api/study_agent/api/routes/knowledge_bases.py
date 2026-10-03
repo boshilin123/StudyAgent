@@ -1,7 +1,7 @@
 from typing import Annotated, Literal
 from uuid import UUID
 
-from fastapi import APIRouter, Query, status
+from fastapi import APIRouter, Query, Response, status
 
 from study_agent.api.dependencies import UnitOfWorkDependency
 from study_agent.api.schemas import (
@@ -14,6 +14,14 @@ from study_agent.application.knowledge_bases import KnowledgeBaseService
 
 router = APIRouter()
 service = KnowledgeBaseService()
+
+
+@router.delete("/{knowledge_base_id}", status_code=status.HTTP_204_NO_CONTENT)
+async def delete_knowledge_base(
+    knowledge_base_id: UUID, uow: UnitOfWorkDependency
+) -> Response:
+    await service.delete(uow, knowledge_base_id)
+    return Response(status_code=status.HTTP_204_NO_CONTENT)
 
 
 @router.post("", response_model=KnowledgeBaseResponse, status_code=status.HTTP_201_CREATED)

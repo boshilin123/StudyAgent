@@ -2,7 +2,7 @@ from datetime import datetime
 from typing import Any, Literal, Self
 from uuid import UUID
 
-from pydantic import BaseModel, ConfigDict, Field, model_validator
+from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 
 
 class CreateTutorConversation(BaseModel):
@@ -33,6 +33,16 @@ class SubmitTutorMessage(BaseModel):
         return self
 
 
+class RenameTutorConversation(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    title: str = Field(min_length=1, max_length=100)
+
+    @field_validator("title", mode="before")
+    @classmethod
+    def trim_title(cls, value: Any) -> Any:
+        return value.strip() if isinstance(value, str) else value
+
+
 class TutorConversationResponse(BaseModel):
     model_config = ConfigDict(from_attributes=True)
     id: UUID
@@ -40,6 +50,7 @@ class TutorConversationResponse(BaseModel):
     study_session_id: UUID | None
     answered_question_id: UUID | None
     status: str
+    title: str | None = None
     created_at: datetime
 
 

@@ -44,6 +44,10 @@ export async function updateKnowledgeBase(
   return (await apiClient.patch<KnowledgeBase>(`/knowledge-bases/${id}`, payload)).data
 }
 
+export async function deleteKnowledgeBase(id: string) {
+  await apiClient.delete(`/knowledge-bases/${id}`)
+}
+
 export async function listMaterials(knowledgeBaseId: string) {
   return (
     await apiClient.get<Page<Material>>(`/knowledge-bases/${knowledgeBaseId}/materials`, {
@@ -96,6 +100,12 @@ export async function getQuestionGenerationJob(id: string) {
   return (await apiClient.get<QuestionGenerationJob>(`/question-generation-jobs/${id}`)).data
 }
 
+export async function listQuestionGenerationJobs(materialId: string) {
+  return (await apiClient.get<QuestionGenerationJob[]>(
+    `/materials/${materialId}/question-generation-jobs`,
+  )).data
+}
+
 export async function listQuestions(params: Record<string, unknown> = {}) {
   return (
     await apiClient.get<Page<Question>>('/questions', { params: { page_size: 100, ...params } })
@@ -117,6 +127,10 @@ export async function updateQuestion(
 export async function setQuestionStatus(id: string, active: boolean) {
   const action = active ? 'activate' : 'disable'
   return (await apiClient.post<Question>(`/questions/${id}/${action}`)).data
+}
+
+export async function deleteQuestion(id: string) {
+  await apiClient.delete(`/questions/${id}`)
 }
 
 export async function createStudySession(payload: {

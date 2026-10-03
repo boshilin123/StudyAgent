@@ -65,7 +65,7 @@ onMounted(async () => {
 <template>
   <div v-loading="loading" class="page-stack">
     <section class="panel-card filter-bar progress-filter">
-      <div><span class="section-kicker">LEARNING ANALYTICS</span><h2>掌握度与复习计划</h2></div>
+      <div><h2>掌握度与复习计划</h2></div>
       <div class="row-inline">
         <el-select v-model="selectedBaseId" clearable placeholder="全部知识库">
           <el-option v-for="base in bases" :key="base.id" :label="base.name" :value="base.id" />
@@ -83,7 +83,7 @@ onMounted(async () => {
 
     <section class="content-grid equal-columns">
       <article class="panel-card">
-        <div class="section-heading compact-heading"><span class="section-kicker">MASTERY</span><h2>知识点掌握度</h2></div>
+        <div class="section-heading compact-heading"><h2>知识点掌握度</h2></div>
         <div v-if="mastery.length" class="mastery-list">
           <div v-for="item in mastery" :key="item.knowledge_point_id" class="mastery-row">
             <div class="row-between"><strong>{{ pointName(item.knowledge_point_id) }}</strong><b>{{ percentage(item.mastery_score) }}</b></div>
@@ -95,7 +95,7 @@ onMounted(async () => {
       </article>
 
       <article class="panel-card">
-        <div class="section-heading compact-heading"><span class="section-kicker">REVIEW QUEUE</span><h2>复习计划</h2></div>
+        <div class="section-heading compact-heading"><h2>复习计划</h2></div>
         <div v-if="reviews.length" class="review-list">
           <div v-for="item in reviews" :key="item.id" class="review-row">
             <span class="calendar-mark"><el-icon><Calendar /></el-icon></span>
@@ -108,7 +108,7 @@ onMounted(async () => {
     </section>
 
     <section class="panel-card">
-      <div class="section-heading compact-heading"><span class="section-kicker">HISTORY</span><h2>学习历史</h2></div>
+      <div class="section-heading compact-heading"><h2>学习历史</h2></div>
       <el-table v-if="history.length" :data="history" stripe>
         <el-table-column label="模式" width="110"><template #default="scope">{{ modeLabel[scope.row.mode] || scope.row.mode }}</template></el-table-column>
         <el-table-column label="开始时间" min-width="150"><template #default="scope">{{ formatDate(scope.row.started_at) }}</template></el-table-column>

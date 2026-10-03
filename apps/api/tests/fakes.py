@@ -25,12 +25,13 @@ class FakeKnowledgeBaseRepository:
         return knowledge_base
 
     async def get(self, knowledge_base_id: UUID) -> KnowledgeBase | None:
-        return self.items.get(knowledge_base_id)
+        item = self.items.get(knowledge_base_id)
+        return item if item is not None and item.status != "deleted" else None
 
     async def list(
         self, *, page: int, page_size: int, status: str | None, keyword: str | None
     ) -> tuple[Sequence[KnowledgeBase], int]:
-        values = list(self.items.values())
+        values = [item for item in self.items.values() if item.status != "deleted"]
         if status:
             values = [item for item in values if item.status == status]
         if keyword:
@@ -127,6 +128,11 @@ class FakeQuestionGenerationJobRepository:
     async def get(self, job_id: UUID) -> QuestionGenerationJob | None:
         return self.items.get(job_id)
 
+    async def list_for_material(self, material_id: UUID) -> Sequence[QuestionGenerationJob]:
+        values = [job for job in self.items.values() if job.material_id == material_id]
+        return sorted(values, key=lambda job: job.created_at or datetime.min.replace(tzinfo=UTC),
+                      reverse=True)[:5]
+
     async def has_running_for_material(self, material_id: UUID) -> bool:
         return any(
             item.material_id == material_id and item.status in {"pending", "running"}
@@ -174,7 +180,7 @@ class FakeQuestionRepository:
         page_size: int,
     ) -> tuple[Sequence[Question], int]:
         del material_id
-        values = list(self.items.values())
+        values = [item for item in self.items.values() if item.status != "deleted"]
         if knowledge_base_id:
             values = [item for item in values if item.knowledge_base_id == knowledge_base_id]
         if question_type:

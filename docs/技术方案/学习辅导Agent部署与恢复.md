@@ -41,11 +41,12 @@ DeepSeek 的 thinking 默认开启，`enable_thinking:false` 不是它的原生�
 - `TUTOR_ENABLED`：辅导开关，默认开启。
 - `TUTOR_TIMEOUT_SECONDS`：整轮期限，默认 90 秒。
 - `TUTOR_MAX_TOOL_CALLS`：业务工具调用预算，默认 6。
-- `TUTOR_MAX_TOOL_RESULT_CHARS`：累计工具结果上下文预算，默认 16000 字符。
+- `TUTOR_MAX_TOOL_RESULT_CHARS`：本轮实际发送给模型的工具消息正文累计预算，默认 16000 字符。这是应用的执行预算，与模型供应商的上下文窗口容量分开；不计入内部证据账本、对象字符串表示或工具元数据。
 - `TUTOR_MAX_MESSAGES`：最多读取 20 条已完成轮次的用户/助手业务消息。
 - `TUTOR_CHECKPOINTER_DB_URL`：可选检查点数据库，默认业务数据库。应用自动转换 asyncpg URL 为 psycopg URL。
 - 单轮固定最多 6 次模型调用、2 次检索、一次结构化修复；单次模型最多 30 秒、工具最多 10 秒，均受剩余整轮期限约束。
 - 不可得用量显示 `known=false, total_tokens=null`。框架结构化输出虚拟工具和业务工具分开计数。
+- 服务端固定的答后会话先开放 `get_answered_question_context`；进度问题先开放 `get_learning_progress`；错题问题再开放 `list_recent_mistakes`。在必需工具完成前暂时关闭最终结构化输出，记录对应读取标记后恢复完整工具集与 `TutorAnswerDraft`。绑定题目和知识库仍由不可变运行上下文提供，最终记录/引用校验继续保留。
 
 ## 并发与存储
 
@@ -64,6 +65,10 @@ DeepSeek 的 thinking 默认开启，`enable_thinking:false` 不是它的原生�
 答后入口须对应数据库真实答题记录。当前知识库存在 active mock_exam 时，创建、运行、工具和最终提交都检查并拒绝。
 
 `tutor_conversations`、`tutor_turns`、`tutor_messages` 保存业务绑定、轮次状态和已验证回复。
+迁移 `0008` 添加可选 `title` 字段和 `deleted` 状态。旧会话仍显示原默认名称。
+`PATCH /api/tutor/conversations/{id}` 只接受去除首尾空格后的 1–100 字符名称；使用中和已归档会话均可改名。
+`DELETE /api/tutor/conversations/{id}` 返回 204，重复删除幂等。软删除保留轮次、消息、绑定和检查点，公共列表计数及详情、归档、提问、轮次查询均排除已删除会话。
+管理操作使用同一会话执行锁，回复运行中返回 `TUTOR_THREAD_BUSY`；删除取得锁后直接取消遗留未完成轮次，不恢复图或调用模型。改名和删除均不改变学习事实记录。
 会话持有最后已接受 checkpoint ID；每轮从这个指针分支，并重置本轮 evidence、flags 和最终 structured_response。
 模型失败、非法引用、超时等中间输出不进入已提交历史；失败用户消息仍可在业务界面查看。
 

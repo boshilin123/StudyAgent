@@ -1,4 +1,5 @@
 import asyncio
+import json
 import time
 from collections.abc import Awaitable, Callable
 from dataclasses import dataclass, field
@@ -11,6 +12,54 @@ from langgraph.types import Command
 from pydantic import BaseModel
 
 from study_agent.domain.errors import DomainError
+
+
+def required_tool_request(request: ModelRequest[Any]) -> ModelRequest[Any]:
+    """Expose mandatory server-bound reads before allowing optional tools or final output."""
+    context = getattr(getattr(request, "runtime", None), "context", None)
+    if context is None:
+        return request
+    read_flags = request.state.get("evidence_flags", [])
+    if not isinstance(read_flags, list) or not all(isinstance(flag, str) for flag in read_flags):
+        raise DomainError("TUTOR_CONTEXT_UNAVAILABLE", "本轮工具读取状态不正确", status_code=503)
+    flags = set(read_flags)
+    required = []
+    if context.answered_question_id:
+        required.append(("answered_question", "get_answered_question_context"))
+    if context.intent in {"progress", "mistakes"}:
+        required.append(("progress", "get_learning_progress"))
+    if context.intent == "mistakes":
+        required.append(("mistakes", "list_recent_mistakes"))
+    for flag, name in required:
+        if flag not in flags:
+            tools = [tool for tool in request.tools if getattr(tool, "name", None) == name]
+            if not tools:
+                raise DomainError(
+                    "TUTOR_REQUIRED_TOOL_MISSING", "本轮必需的学习记录工具不可用", status_code=503
+                )
+            # ToolStrategy otherwise permits the model to finalize before mandatory reads.
+            # Restore the original tools/format next time, once this tool records its flag.
+            return request.override(tools=tools, response_format=None, tool_choice="any")
+    return request
+
+
+def tool_result_chars(result: ToolMessage | Command[Any]) -> int:
+    """Count model-visible content, excluding the duplicate evidence ledger and repr overhead."""
+    messages: object
+    if isinstance(result, ToolMessage):
+        messages = [result]
+    elif isinstance(result.update, dict):
+        messages = result.update.get("messages")
+    else:
+        raise DomainError("TUTOR_TOOL_RESULT_INVALID", "工具结果格式不正确", status_code=503)
+    if not isinstance(messages, list) or not all(isinstance(m, ToolMessage) for m in messages):
+        raise DomainError("TUTOR_TOOL_RESULT_INVALID", "工具消息格式不正确", status_code=503)
+    return sum(
+        len(message.content)
+        if isinstance(message.content, str)
+        else len(json.dumps(message.content, ensure_ascii=False))
+        for message in messages
+    )
 
 
 @dataclass
@@ -61,6 +110,7 @@ class TutorBudgetMiddleware(AgentMiddleware):
         handler: Callable[[ModelRequest[Any]], Awaitable[ModelResponse[Any]]],
     ) -> ModelResponse[Any]:
         self.budget.check()
+        request = required_tool_request(request)
         if self.budget.model_calls >= 6:
             raise DomainError("TUTOR_BUDGET_EXCEEDED", "模型调用次数达到上限", status_code=503)
         # Cap estimated input independently of provider usage and completion limits.
@@ -140,12 +190,19 @@ class TutorBudgetMiddleware(AgentMiddleware):
                     name=result.name,
                     status="error",
                 )
-            self.budget.result_chars += len(str(result))
+            content_chars = tool_result_chars(result)
+            self.budget.result_chars += content_chars
             if self.budget.result_chars > self.budget.max_result_chars:
                 raise DomainError(
                     "TUTOR_BUDGET_EXCEEDED", "工具结果超过上下文预算", status_code=503
                 )
             self.budget.trace.append(
-                {"kind": "tool", "name": name, "sequence": self.budget.tool_calls}
+                {
+                    "kind": "tool",
+                    "name": name,
+                    "sequence": self.budget.tool_calls,
+                    "content_chars": content_chars,
+                    "total_result_chars": self.budget.result_chars,
+                }
             )
             return result

@@ -441,7 +441,33 @@ class TutorService:
         async with self.repository.execution_lock(conversation_id) as acquired:
             if not acquired:
                 raise DomainError("TUTOR_THREAD_BUSY", "会话运行中，暂不能归档", status_code=409)
+            conversation = await self.repository.conversation(conversation_id)
             orphan = await self.repository.running_turn(conversation_id)
             if orphan:
                 await self.recover_locked(conversation, orphan)
             return await self.repository.archive(conversation_id)
+
+    async def rename(self, conversation_id: UUID, title: str) -> TutorConversationModel:
+        async with self.repository.execution_lock(conversation_id) as acquired:
+            if not acquired:
+                raise DomainError("TUTOR_THREAD_BUSY", "会话运行中，暂不能重命名", status_code=409)
+            await self.repository.conversation(conversation_id)
+            return await self.repository.rename(conversation_id, title)
+
+    async def delete(self, conversation_id: UUID) -> None:
+        async with self.repository.execution_lock(conversation_id) as acquired:
+            if not acquired:
+                raise DomainError("TUTOR_THREAD_BUSY", "会话运行中，暂不能删除", status_code=409)
+            await self.repository.conversation(conversation_id, include_deleted=True)
+            orphan = await self.repository.running_turn(conversation_id)
+            if orphan:
+                # Deletion never resumes an abandoned graph or makes a model request.
+                await self.repository.fail(
+                    orphan.id,
+                    "TUTOR_CONVERSATION_DELETED",
+                    "辅导会话已删除",
+                    orphan.usage or {"known": False, "total_tokens": None},
+                    orphan.trace or [],
+                    status="cancelled",
+                )
+            await self.repository.delete(conversation_id)

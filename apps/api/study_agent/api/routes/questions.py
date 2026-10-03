@@ -24,6 +24,18 @@ job_router = APIRouter()
 service = QuestionService()
 
 
+@material_router.get(
+    "/{material_id}/question-generation-jobs", response_model=list[QuestionGenerationJobResponse]
+)
+async def list_question_generation_jobs(
+    material_id: UUID, uow: UnitOfWorkDependency
+) -> list[QuestionGenerationJobResponse]:
+    return [
+        QuestionGenerationJobResponse.model_validate(job)
+        for job in await service.list_generation_jobs(uow, material_id)
+    ]
+
+
 @material_router.post(
     "/{material_id}/question-generation-jobs",
     response_model=QuestionGenerationJobResponse,
@@ -123,6 +135,15 @@ async def activate_question(
     return QuestionResponse.model_validate(
         await service.set_status(uow, question_index, question_id, "active")
     )
+
+
+@router.delete("/{question_id}", status_code=status.HTTP_204_NO_CONTENT)
+async def delete_question(
+    question_id: UUID,
+    uow: UnitOfWorkDependency,
+    question_index: QuestionIndexDependency,
+) -> None:
+    await service.delete(uow, question_index, question_id)
 
 
 @router.post("/{question_id}/disable", response_model=QuestionResponse)

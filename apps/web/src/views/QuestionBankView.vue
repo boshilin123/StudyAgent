@@ -1,10 +1,12 @@
 <script setup lang="ts">
 import { computed, onMounted, ref } from 'vue'
-import { ElMessage } from 'element-plus'
-import { Check, EditPen, Refresh, VideoPause } from '@element-plus/icons-vue'
+import { useRoute } from 'vue-router'
+import { ElMessage, ElMessageBox } from 'element-plus'
+import { Check, Delete, EditPen, Refresh, VideoPause } from '@element-plus/icons-vue'
 
 import {
   apiErrorMessage,
+  deleteQuestion,
   listKnowledgeBases,
   listQuestions,
   setQuestionStatus,
@@ -17,10 +19,12 @@ const loading = ref(false)
 const bases = ref<KnowledgeBase[]>([])
 const questions = ref<Question[]>([])
 const total = ref(0)
-const filters = ref({ knowledge_base_id: '', status: '', question_type: '' })
+const route = useRoute()
+const filters = ref({ knowledge_base_id: typeof route.query.knowledge_base_id === 'string' ? route.query.knowledge_base_id : '', status: '', question_type: '' })
 const detail = ref<Question | null>(null)
 const editVisible = ref(false)
 const saving = ref(false)
+const deletingIds = ref(new Set<string>())
 const editForm = ref({ stem: '', answers: '', explanation: '', difficulty: 1 })
 const questionTypes: QuestionType[] = ['single_choice', 'fill_blank', 'true_false']
 
@@ -97,6 +101,29 @@ async function toggleStatus(question: Question) {
   }
 }
 
+async function removeQuestion(question: Question) {
+  try {
+    await ElMessageBox.confirm(
+      '删除后该题将退出题库，不再用于练习；已有作答和学习历史会保留。确认删除吗？',
+      '删除题目', { confirmButtonText: '删除', cancelButtonText: '取消', type: 'warning' },
+    )
+  } catch { return }
+  deletingIds.value.add(question.id)
+  try {
+    await deleteQuestion(question.id)
+    if (detail.value?.id === question.id) {
+      detail.value = null
+      editVisible.value = false
+    }
+    await load()
+    ElMessage.success('题目已删除，已有学习历史保留')
+  } catch (error) {
+    ElMessage.error(apiErrorMessage(error))
+  } finally {
+    deletingIds.value.delete(question.id)
+  }
+}
+
 onMounted(async () => {
   try {
     bases.value = (await listKnowledgeBases({ page_size: 100 })).items
@@ -155,6 +182,7 @@ onMounted(async () => {
               :icon="question.status === 'active' ? VideoPause : Check"
               @click="toggleStatus(question)"
             >{{ question.status === 'active' ? '停用' : '启用' }}</el-button>
+            <el-button text type="danger" :icon="Delete" :loading="deletingIds.has(question.id)" @click="removeQuestion(question)">删除</el-button>
           </div>
         </div>
       </article>
@@ -165,7 +193,7 @@ onMounted(async () => {
   <el-drawer :model-value="Boolean(detail)" :with-header="false" size="520px" @close="detail = null">
     <template v-if="detail">
       <div class="drawer-heading">
-        <span class="section-kicker">QUESTION REVIEW</span>
+
         <h2>{{ questionTypeLabel[detail.question_type] }}</h2>
         <el-tag :type="statusMap[detail.status]?.type">{{ statusMap[detail.status]?.label }}</el-tag>
       </div>
@@ -182,6 +210,7 @@ onMounted(async () => {
       <div class="drawer-actions">
         <el-button :icon="EditPen" @click="openEdit(detail)">编辑题目</el-button>
         <el-button :type="detail.status === 'active' ? 'warning' : 'success'" @click="toggleStatus(detail)">{{ detail.status === 'active' ? '停用' : '审核通过并启用' }}</el-button>
+        <el-button type="danger" :icon="Delete" :loading="deletingIds.has(detail.id)" @click="removeQuestion(detail)">删除题目</el-button>
       </div>
     </template>
   </el-drawer>

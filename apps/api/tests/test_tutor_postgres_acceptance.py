@@ -642,3 +642,138 @@ async def test_r12_expired_orphan_has_safe_terminal_state(tutor_database):
         state = await service.turn_status(conversation.id, turn.id)
         assert state["status"] == "failed" and state["error_code"] == "TUTOR_INTERRUPTED"
         assert (await service.submit(conversation.id, payload("明确重试")))["status"] == "completed"
+
+
+async def test_conversation_management_http_validation_history_and_deleted_access(tutor_database):
+    data = tutor_database
+    model = model_for(data)
+    async with AsyncPostgresSaver.from_conn_string(psycopg_connection_string(data.url)) as saver:
+        service = service_for(data, saver, model)
+        conversation = await service.create(CreateTutorConversation(knowledge_base_id=data.kb))
+        request = payload()
+        result = await service.submit(conversation.id, request)
+        assert result["status"] == "completed"
+        app = create_app()
+        app.dependency_overrides[get_tutor_service] = lambda: service
+        headers = (
+            {"Authorization": "Bearer " + app_settings.api_access_token}
+            if app_settings.api_access_token
+            else {}
+        )
+        endpoint = f"/api/tutor/conversations/{conversation.id}"
+        async with httpx.AsyncClient(
+            transport=httpx.ASGITransport(app=app), base_url="http://acceptance", headers=headers
+        ) as client:
+            assert (await client.get(endpoint)).json()["conversation"]["title"] is None
+            for invalid in (
+                {"title": ""},
+                {"title": "  "},
+                {"title": "名" * 101},
+                {"title": 123},
+                {"title": "名字", "status": "active"},
+                {},
+            ):
+                assert (await client.patch(endpoint, json=invalid)).status_code == 422
+            renamed = await client.patch(endpoint, json={"title": "  聚时接口学习  "})
+            assert renamed.status_code == 200
+            assert renamed.json()["title"] == "聚时接口学习"
+            assert renamed.json()["knowledge_base_id"] == str(data.kb)
+            assert (await client.get(endpoint)).json()["total"] == 2
+            listed = await client.get(
+                "/api/tutor/conversations", params={"knowledge_base_id": str(data.kb)}
+            )
+            assert listed.json()["items"][0]["title"] == "聚时接口学习"
+            assert (await client.post(endpoint + "/archive")).status_code == 200
+            archived = await client.patch(endpoint, json={"title": "归档资料"})
+            assert archived.json()["status"] == "archived"
+            assert archived.json()["title"] == "归档资料"
+            assert (await client.delete(endpoint)).status_code == 204
+            assert (await client.delete(endpoint)).status_code == 204
+            listed = await client.get(
+                "/api/tutor/conversations", params={"knowledge_base_id": str(data.kb)}
+            )
+            assert listed.json()["total"] == 0 and listed.json()["items"] == []
+            # Deleted conversations cannot be read, changed, resumed or replayed via old IDs.
+            assert (await client.get(endpoint)).status_code == 404
+            assert (await client.patch(endpoint, json={"title": "不能恢复"})).status_code == 404
+            assert (await client.post(endpoint + "/archive")).status_code == 404
+            assert (
+                await client.post(endpoint + "/messages", json=request.model_dump(mode="json"))
+            ).status_code == 404
+            assert (await client.get(endpoint + "/turns/" + result["turn_id"])).status_code == 404
+            assert (await client.delete(f"/api/tutor/conversations/{uuid4()}")).status_code == 404
+        assert len(model.calls) == 2  # Management makes no further model requests.
+        async with data.factory() as session:
+            stored = await session.get(TutorConversationModel, conversation.id)
+            assert stored.status == "deleted" and stored.title == "归档资料"
+            assert stored.graph_thread_id == conversation.graph_thread_id
+            assert (
+                await session.scalar(
+                    select(func.count())
+                    .select_from(TutorMessageModel)
+                    .where(TutorMessageModel.conversation_id == conversation.id)
+                )
+                == 2
+            )
+            assert await session.get(KnowledgeBaseModel, data.kb) is not None
+            assert await session.get(MaterialModel, data.material) is not None
+            assert (
+                await session.scalar(
+                    select(func.count())
+                    .select_from(QuestionModel)
+                    .where(QuestionModel.knowledge_base_id == data.kb)
+                )
+                == 6
+            )
+        assert (
+            await saver.aget_tuple(
+                {
+                    "configurable": {
+                        "thread_id": conversation.graph_thread_id,
+                        "checkpoint_id": stored.last_committed_checkpoint_id,
+                    }
+                }
+            )
+        ) is not None
+
+
+async def test_conversation_management_busy_orphan_and_scope(tutor_database):
+    data = tutor_database
+    model = model_for(data)
+    async with AsyncPostgresSaver.from_conn_string(psycopg_connection_string(data.url)) as saver:
+        service = service_for(data, saver, model)
+        conversation = await service.create(CreateTutorConversation(knowledge_base_id=data.kb))
+        async with data.repository.execution_lock(conversation.id) as acquired:
+            assert acquired
+            for operation in (
+                service.rename(conversation.id, "新名称"),
+                service.delete(conversation.id),
+                service.archive(conversation.id),
+            ):
+                with pytest.raises(DomainError) as error:
+                    await operation
+                assert error.value.code == "TUTOR_THREAD_BUSY"
+        assert (await data.repository.conversation(conversation.id)).status == "active"
+        orphan = await data.repository.reserve(
+            conversation.id, uuid4(), "未完成的问题", "materials", "a" * 64, -1, "scripted"
+        )
+        await service.rename(conversation.id, "仍可重命名")
+        await service.delete(conversation.id)
+        terminal = await data.repository.turn(conversation.id, turn_id=orphan.id)
+        assert (
+            terminal.status == "cancelled" and terminal.error_code == "TUTOR_CONVERSATION_DELETED"
+        )
+        assert len(model.calls) == 0
+        hidden = await service.create(CreateTutorConversation(knowledge_base_id=data.kb))
+        async with data.factory() as session:
+            await session.execute(
+                update(TutorConversationModel)
+                .where(TutorConversationModel.id == hidden.id)
+                .values(scope_key="another-user")
+            )
+            await session.commit()
+        for operation in (service.rename(hidden.id, "不应访问"), service.delete(hidden.id)):
+            with pytest.raises(DomainError) as error:
+                await operation
+            assert error.value.code == "TUTOR_CONVERSATION_NOT_FOUND"
+        assert (await data.repository.list_conversations(data.kb, 1, 20))[1] == 0

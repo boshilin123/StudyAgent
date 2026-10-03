@@ -5,6 +5,7 @@ from uuid import uuid4
 import pytest
 from fastapi.testclient import TestClient
 
+from study_agent.application.knowledge_bases import KnowledgeBaseService
 from study_agent.application.materials import MaterialService
 from study_agent.application.questions import QuestionService
 from study_agent.application.study import grade_question
@@ -57,6 +58,10 @@ async def test_generation_dispatch_failure_is_retryable(monkeypatch: pytest.Monk
     )
     uow = FakeUnitOfWork()
     material = _ready_material()
+    base = await KnowledgeBaseService().create(
+        uow, name="派发测试", description=None, language="zh-CN"
+    )
+    material = replace(material, knowledge_base_id=base.id)
     uow.materials.items[material.id] = material
     service = QuestionService()
     kwargs = dict(

@@ -108,6 +108,7 @@ class QuestionGenerationJob:
     language: str
     generated_count: int = 0
     rejected_count: int = 0
+    rejected_candidates: list[dict[str, object]] = field(default_factory=list)
     error_code: str | None = None
     error_message: str | None = None
     started_at: datetime | None = None

@@ -82,7 +82,7 @@ onMounted(loadDashboard)
     <section class="content-grid two-one">
       <article class="panel-card">
         <div class="section-heading row-between">
-          <div><span class="section-kicker">RECENT ACTIVITY</span><h2>最近学习</h2></div>
+          <div><h2>最近学习</h2></div>
           <RouterLink class="text-link" to="/progress">查看全部</RouterLink>
         </div>
         <div v-if="recentSessions.length" class="activity-list">
@@ -103,7 +103,7 @@ onMounted(loadDashboard)
       </article>
 
       <article class="panel-card quick-card">
-        <span class="section-kicker">QUICK START</span>
+
         <h2>下一步做什么？</h2>
         <RouterLink to="/knowledge-bases"><b>01</b><span>上传或管理学习资料</span></RouterLink>
         <RouterLink to="/questions"><b>02</b><span>审核题目与原文引用</span></RouterLink>

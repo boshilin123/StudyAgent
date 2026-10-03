@@ -231,13 +231,20 @@ class StudyService:
             raise DomainError("STUDY_SESSION_NOT_FOUND", "学习会话不存在", status_code=404)
         if study_session.status != "active":
             raise DomainError("STUDY_SESSION_FINISHED", "学习会话已经结束", status_code=409)
-        await uow.lock(question_id)
-        question, _ = await self._current_assignment(uow, study_session)
-        if question is None or question.id != question_id:
-            raise DomainError("QUESTION_OUT_OF_ORDER", "只能提交当前题目的答案", status_code=409)
-        if question.status != "active" or not question.sources:
+        await uow.lock(study_session.knowledge_base_id)
+        if await uow.knowledge_bases.get(study_session.knowledge_base_id) is None:
             raise DomainError(
-                "QUESTION_UNAVAILABLE", "题目已停用或来源失效，请结束本轮学习", status_code=409
+                "KNOWLEDGE_BASE_NOT_FOUND", "知识库已删除，不能继续答题", status_code=404
+            )
+        await uow.lock(question_id)
+        question, assignment = await self._current_assignment(uow, study_session)
+        if assignment is None or assignment.question_id != question_id:
+            raise DomainError("QUESTION_OUT_OF_ORDER", "只能提交当前题目的答案", status_code=409)
+        if question is None or question.status != "active" or not question.sources:
+            raise DomainError(
+                "QUESTION_UNAVAILABLE",
+                "题目已删除、停用或来源失效，请结束本轮学习",
+                status_code=409,
             )
         # A point may not have a mastery/review row yet: a row lock alone cannot
         # protect concurrent inserts. Transaction-scoped advisory locks can.

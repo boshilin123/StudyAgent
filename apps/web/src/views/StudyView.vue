@@ -205,7 +205,7 @@ onMounted(async () => {
   <div v-loading="loading" class="study-shell">
     <section v-if="!session" class="setup-card">
       <div class="setup-intro">
-        <span class="section-kicker">ADAPTIVE SESSION</span>
+
         <h2>开始一轮真正会调整的练习</h2>
         <p>选择模式和范围。系统会根据掌握度、复习到期、历史题目和难度动态决定下一题。</p>
         <div class="mode-explain">
@@ -253,7 +253,7 @@ onMounted(async () => {
 
       <section v-if="session.status === 'completed' && !lastResult" class="completion-card">
         <span class="completion-mark">✓</span>
-        <span class="section-kicker">SESSION COMPLETED</span>
+
         <h2>本轮学习完成</h2>
         <div class="completion-stats">
           <div><strong>{{ session.answered_question_count }}</strong><span>已答题</span></div>
@@ -266,7 +266,7 @@ onMounted(async () => {
       <section v-else-if="lastResult" class="result-card" :class="lastResult.verdict">
         <div class="result-heading">
           <span class="result-icon">{{ lastResult.verdict === 'correct' ? '✓' : '×' }}</span>
-          <div><span class="section-kicker">ANSWER FEEDBACK</span><h2>{{ lastResult.feedback }}</h2></div>
+          <div><h2>{{ lastResult.feedback }}</h2></div>
           <strong>{{ lastResult.score }} / {{ lastResult.max_score }}</strong>
         </div>
         <div class="explanation-grid">
@@ -321,7 +321,7 @@ onMounted(async () => {
       </section>
 
       <section v-else class="completion-card">
-        <span class="section-kicker">SESSION RECOVERY</span>
+
         <h2>当前会话暂时没有可作答题目</h2>
         <p>题库可能已停用或会话状态需要重新同步。你可以结束本轮并重新选择范围。</p>
         <div class="row-inline">

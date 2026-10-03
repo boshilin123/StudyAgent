@@ -6,7 +6,7 @@ const route = useRoute()
 
 <template>
   <section class="placeholder-card">
-    <span class="section-kicker">MODULE SCAFFOLD</span>
+
     <h2>{{ route.meta.title }}</h2>
     <p>{{ route.meta.description }}</p>
     <div class="empty-state">

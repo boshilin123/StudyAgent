@@ -1,14 +1,43 @@
 <script setup lang="ts">
+import { computed, onMounted, onUnmounted, ref } from 'vue'
 import { Collection, DataAnalysis, HomeFilled, Reading } from '@element-plus/icons-vue'
 import { storeToRefs } from 'pinia'
 import { useRoute } from 'vue-router'
 import { ElMessageBox } from 'element-plus'
 
 import { useAppStore } from '@/stores/app'
+import { apiClient } from '@/api/client'
 
 const route = useRoute()
 const appStore = useAppStore()
 const { sidebarCollapsed, sidebarWidth } = storeToRefs(appStore)
+const apiState = ref<'checking' | 'ready' | 'unavailable'>('checking')
+const apiLabel = computed(() => ({ checking: '正在检查 API', ready: 'API 可用', unavailable: 'API 不可用' })[apiState.value])
+let healthTimer: number | undefined
+let healthController: AbortController | undefined
+
+async function checkApi() {
+  healthController?.abort()
+  const controller = new AbortController()
+  healthController = controller
+  try {
+    const { data } = await apiClient.get<{ status: string }>('/health/ready', {
+      timeout: 8000, signal: controller.signal,
+    })
+    if (!controller.signal.aborted) apiState.value = data.status === 'ok' ? 'ready' : 'unavailable'
+  } catch {
+    if (!controller.signal.aborted) apiState.value = 'unavailable'
+  }
+}
+
+onMounted(() => {
+  void checkApi()
+  healthTimer = window.setInterval(() => void checkApi(), 30000)
+})
+onUnmounted(() => {
+  window.clearInterval(healthTimer)
+  healthController?.abort()
+})
 
 const navItems = [
   { path: '/', label: '学习概览', icon: HomeFilled },
@@ -51,16 +80,16 @@ async function configureAccessToken() {
         </RouterLink>
       </nav>
 
-      <div v-if="!sidebarCollapsed" class="sidebar-note">个人学习空间 · MVP</div>
+      <div v-if="!sidebarCollapsed" class="sidebar-note">个人学习空间</div>
     </aside>
 
-    <main class="main-content">
+    <main class="main-content" :class="{ 'tutor-page': route.path === '/tutor' }">
       <header class="topbar">
         <div>
-          <p class="eyebrow">PERSONAL LEARNING OS</p>
           <h1>{{ route.meta.title }}</h1>
         </div>
-        <span class="status-pill"><i /> 服务已连接</span>
+        <button type="button" class="status-pill" :class="apiState" aria-label="检查 API 状态"
+          title="检查后端 API 及数据库、任务队列、索引和存储是否就绪；点击重新检查" @click="checkApi"><i />{{ apiLabel }}</button>
         <el-button text @click="configureAccessToken">访问令牌</el-button>
       </header>
       <RouterView />

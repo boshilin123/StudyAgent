@@ -32,7 +32,7 @@ class KnowledgeBaseService:
 
     async def get(self, uow: UnitOfWork, knowledge_base_id: UUID) -> KnowledgeBase:
         knowledge_base = await uow.knowledge_bases.get(knowledge_base_id)
-        if knowledge_base is None:
+        if knowledge_base is None or knowledge_base.status == "deleted":
             raise DomainError("KNOWLEDGE_BASE_NOT_FOUND", "知识库不存在", status_code=404)
         return knowledge_base
 
@@ -53,6 +53,16 @@ class KnowledgeBaseService:
         )
         return list(items), total
 
+    async def delete(self, uow: UnitOfWork, knowledge_base_id: UUID) -> None:
+        await uow.lock(knowledge_base_id)
+        current = await uow.knowledge_bases.get(knowledge_base_id)
+        if current is None or current.status == "deleted":
+            return
+        await uow.knowledge_bases.update(
+            replace(current, status="deleted", updated_at=datetime.now(UTC))
+        )
+        await uow.commit()
+
     async def update(
         self,
         uow: UnitOfWork,
@@ -64,6 +74,7 @@ class KnowledgeBaseService:
         status: str | None = None,
         description_is_set: bool = False,
     ) -> KnowledgeBase:
+        await uow.lock(knowledge_base_id)
         current = await self.get(uow, knowledge_base_id)
         updated = replace(
             current,

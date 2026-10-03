@@ -74,6 +74,11 @@ class QuestionService:
         material = await uow.materials.get(material_id)
         if material is None:
             raise DomainError("MATERIAL_NOT_FOUND", "资料不存在", status_code=404)
+        knowledge_base = await uow.knowledge_bases.get(material.knowledge_base_id)
+        if knowledge_base is None or knowledge_base.status != "active":
+            raise DomainError(
+                "KNOWLEDGE_BASE_NOT_ACTIVE", "知识库已归档或删除，不能生成题目", status_code=409
+            )
         if material.parse_status != "ready":
             raise DomainError("MATERIAL_NOT_READY", "资料尚未完成解析和索引", status_code=409)
         if await uow.ingestion_jobs.has_running_for_material(material_id):
@@ -123,11 +128,41 @@ class QuestionService:
             )
         return job
 
+    async def list_generation_jobs(
+        self, uow: UnitOfWork, material_id: UUID
+    ) -> list[QuestionGenerationJob]:
+        material = await uow.materials.get(material_id)
+        if material is None or await uow.knowledge_bases.get(material.knowledge_base_id) is None:
+            raise DomainError("MATERIAL_NOT_FOUND", "资料不存在", status_code=404)
+        return list(await uow.question_generation_jobs.list_for_material(material_id))
+
     async def get(self, uow: UnitOfWork, question_id: UUID) -> Question:
         question = await uow.questions.get(question_id)
-        if question is None:
+        if question is None or question.status == "deleted":
             raise DomainError("QUESTION_NOT_FOUND", "题目不存在", status_code=404)
         return question
+
+    async def delete(
+        self, uow: UnitOfWork, question_index: QuestionIndex, question_id: UUID
+    ) -> None:
+        await uow.lock(question_id)
+        current = await uow.questions.get(question_id)
+        if current is None:
+            return
+        # Preserve historical answers and tutor references. Repeated requests also
+        # retry index cleanup after an interrupted deletion.
+        await uow.questions.update(
+            replace(current, status="deleted", vector_id=None, updated_at=datetime.now(UTC))
+        )
+        await uow.commit()
+        try:
+            await question_index.delete_questions([question_id])
+        except Exception as exc:
+            raise DomainError(
+                "QUESTION_DELETE_INDEX_PENDING",
+                "题目已移出题库，检索索引清理失败，请重试删除",
+                status_code=503,
+            ) from exc
 
     async def list(
         self,

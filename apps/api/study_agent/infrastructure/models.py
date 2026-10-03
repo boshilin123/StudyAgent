@@ -32,7 +32,9 @@ class TimestampMixin:
 
 class KnowledgeBaseModel(TimestampMixin, Base):
     __tablename__ = "knowledge_bases"
-    __table_args__ = (CheckConstraint("status in ('active', 'archived')", name="ck_kb_status"),)
+    __table_args__ = (
+        CheckConstraint("status in ('active', 'archived', 'deleted')", name="ck_kb_status"),
+    )
 
     id: Mapped[UUID] = mapped_column(primary_key=True, default=uuid4)
     name: Mapped[str] = mapped_column(String(200), nullable=False)
@@ -163,7 +165,7 @@ class QuestionModel(TimestampMixin, Base):
         CheckConstraint("difficulty >= 1 and difficulty <= 5", name="ck_question_difficulty"),
         CheckConstraint("max_score > 0", name="ck_question_max_score"),
         CheckConstraint(
-            "status in ('draft', 'active', 'disabled', 'rejected')",
+            "status in ('draft', 'active', 'disabled', 'rejected', 'deleted')",
             name="ck_question_status",
         ),
         Index(
@@ -233,6 +235,9 @@ class QuestionGenerationJobModel(Base):
     language: Mapped[str] = mapped_column(String(20), nullable=False)
     generated_count: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
     rejected_count: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
+    rejected_candidates: Mapped[list[dict[str, object]]] = mapped_column(
+        JSON, default=list, server_default="[]", nullable=False
+    )
     error_code: Mapped[str | None] = mapped_column(String(100))
     error_message: Mapped[str | None] = mapped_column(Text)
     started_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))

@@ -1,6 +1,7 @@
 """Exercise framework calls, budgets and checkpoint branching with deterministic models."""
 
 import asyncio
+import json
 import time
 from types import SimpleNamespace
 from uuid import uuid4
@@ -11,13 +12,13 @@ from langchain.agents.middleware.types import ModelResponse
 from langchain_core.messages import AIMessage, HumanMessage, ToolMessage
 from langchain_core.outputs import ChatGeneration, ChatResult
 from langgraph.checkpoint.memory import InMemorySaver
-from langgraph.types import Overwrite
+from langgraph.types import Command, Overwrite
 from pydantic import Field
 
 from study_agent.agents.tutor import middleware as tutor_middleware
 from study_agent.agents.tutor.agent import create_tutor_agent
 from study_agent.agents.tutor.context import TutorContext
-from study_agent.agents.tutor.middleware import RunBudget, TutorBudgetMiddleware
+from study_agent.agents.tutor.middleware import RunBudget, TutorBudgetMiddleware, tool_result_chars
 from study_agent.agents.tutor.validation import validate_draft
 from study_agent.domain.errors import DomainError
 from tests.test_tutor_agent import Queries, Retrieval, ScriptedTutorModel
@@ -140,6 +141,103 @@ async def test_provider_failure_marks_usage_unknown_instead_of_zero_cost():
     assert budget.usage()["known"] is False and budget.usage()["total_tokens"] is None
 
 
+class MandatoryReadsModel(ScriptedTutorModel):
+    bindings: list = Field(default_factory=list)
+
+    def bind_tools(self, tools, **kwargs):
+        names = [getattr(t, "name", None) or t.get("function", t).get("name") for t in tools]
+        self.bindings.append({"names": names, "choice": kwargs.get("tool_choice")})
+        return self
+
+    def _generate(self, messages, stop=None, run_manager=None, **kwargs):
+        self.calls.append(messages)
+        names = self.bindings[-1]["names"]
+        # Prefer to finalize immediately unless the framework restricts available tools.
+        # This reproduces the real model's premature answer without scripted correct reads.
+        if "TutorAnswerDraft" not in names:
+            message = AIMessage(content="", tool_calls=[tool_call(names[0])])
+        else:
+            has_context = any(isinstance(m, ToolMessage) for m in messages)
+            message = AIMessage(
+                content="",
+                tool_calls=[
+                    tool_call(
+                        "TutorAnswerDraft",
+                        {
+                            "status": "answered" if has_context else "needs_clarification",
+                            "answer": "根据当前资料与学习记录给出解释。",
+                            "citation_ids": ["bound-evidence"]
+                            if any(
+                                isinstance(m, ToolMessage) and '"bound-evidence"' in str(m.content)
+                                for m in messages
+                            )
+                            else [],
+                            "suggested_questions": [],
+                            "study_suggestions": [],
+                        },
+                    )
+                ],
+            )
+        return ChatResult(generations=[ChatGeneration(message=message)])
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize(
+    "intent,anchored,expected",
+    [
+        ("answered_question", True, ["get_answered_question_context"]),
+        ("progress", False, ["get_learning_progress"]),
+        ("mistakes", False, ["get_learning_progress", "list_recent_mistakes"]),
+        (
+            "mistakes",
+            True,
+            ["get_answered_question_context", "get_learning_progress", "list_recent_mistakes"],
+        ),
+        ("general", False, []),
+    ],
+)
+async def test_server_required_reads_precede_finalization_and_restore_normal_tools(
+    intent, anchored, expected
+):
+    class BoundQueries(Queries):
+        async def answered_question(self, kb, session, question):
+            return {
+                "code": "OK",
+                "evidence": [{"evidence_id": "bound-evidence", "quote": "真实已答题依据"}],
+            }
+
+    model = MandatoryReadsModel()
+    budget = RunBudget(time.monotonic() + 10)
+    graph = create_tutor_agent(model, BoundQueries(), Retrieval(), budget, InMemorySaver())
+    context = TutorContext(
+        uuid4(),
+        uuid4(),
+        uuid4(),
+        study_session_id=uuid4() if anchored else None,
+        answered_question_id=uuid4() if anchored else None,
+        intent=intent,
+    )
+    state = await graph.ainvoke(
+        {
+            "messages": [HumanMessage(content="聚时的主要作用是什么")],
+            "evidence": {},
+            "evidence_flags": [],
+            "turn_id": str(context.turn_id),
+        },
+        {"configurable": {"thread_id": str(uuid4())}},
+        context=context,
+    )
+    assert [entry["names"] for entry in model.bindings[: len(expected)]] == [
+        [name] for name in expected
+    ]
+    assert all(entry["choice"] == "any" for entry in model.bindings[: len(expected)])
+    assert "TutorAnswerDraft" in model.bindings[-1]["names"]
+    assert "search_learning_materials" in model.bindings[-1]["names"]
+    assert budget.tool_calls == len(expected)
+    assert budget.model_calls == len(expected) + 1
+    validate_draft(state["structured_response"], state, intent, anchored)
+
+
 @pytest.mark.asyncio
 async def test_deadline_and_tool_result_budgets():
     budget = RunBudget(time.monotonic() - 1)
@@ -150,6 +248,136 @@ async def test_deadline_and_tool_result_budgets():
     with pytest.raises(DomainError) as error:
         await run_graph(ScriptedTutorModel(), small)
     assert error.value.code == "TUTOR_BUDGET_EXCEEDED" and small.tool_calls == 1
+
+
+@pytest.mark.asyncio
+async def test_large_search_and_followup_count_only_model_messages_preserving_evidence():
+    evidence = [
+        {
+            "evidence_id": f"e{i}",
+            "material_id": str(uuid4()),
+            "chunk_id": str(uuid4()),
+            "title": "部署资料",
+            "content_hash": "hash",
+            "valid": True,
+            "quote": "部署接口支持自动部署。\n" * 90,
+        }
+        for i in range(5)
+    ]
+
+    class LongRetrieval(Retrieval):
+        async def search(self, kb, query, top_k):
+            return evidence[:top_k]
+
+    class AnswerQueries(Queries):
+        async def answered_question(self, kb, session, question):
+            return {
+                "code": "OK",
+                "stem": "部署接口的主要作用是什么？",
+                "correct_answer": ["自动部署"],
+                "evidence": evidence[:1],
+            }
+
+    final = AIMessage(
+        content="",
+        tool_calls=[
+            tool_call(
+                "TutorAnswerDraft",
+                {
+                    "status": "answered",
+                    "answer": "根据资料，接口用于自动部署。",
+                    "citation_ids": ["e0"],
+                    "suggested_questions": [],
+                    "study_suggestions": [],
+                },
+            )
+        ],
+    )
+    model = SequenceModel(
+        responses=[
+            AIMessage(
+                content="",
+                tool_calls=[
+                    tool_call(
+                        "search_learning_materials",
+                        {
+                            "query": "部署的主要作用",
+                            "top_k": 5,
+                        },
+                    )
+                ],
+            ),
+            AIMessage(content="", tool_calls=[tool_call("get_answered_question_context")]),
+            final,
+        ]
+    )
+    state, budget = await run_graph(model, queries=AnswerQueries(), retrieval=LongRetrieval())
+    messages = [m for m in state["messages"] if isinstance(m, ToolMessage)]
+    # ToolStrategy's final acknowledgement is not a business tool result.
+    tool_messages = messages[:2]
+    expected = sum(len(m.content) for m in tool_messages)
+    old_size = sum(
+        len(
+            str(
+                Command(
+                    update={
+                        "messages": [m],
+                        "evidence_flags": ["materials"],
+                        "evidence": {
+                            e["evidence_id"]: e for e in json.loads(m.content)["evidence"]
+                        },
+                    }
+                )
+            )
+        )
+        for m in tool_messages
+    )
+    assert expected < 16000 < old_size
+    assert budget.result_chars == expected
+    assert budget.model_calls == 3 and budget.tool_calls == 2
+    assert state["evidence"]["e0"]["quote"] == evidence[0]["quote"]
+    assert (
+        validate_draft(state["structured_response"], state, "answered_question", True)[0]
+        == evidence[0]
+    )
+    tool_trace = [item for item in budget.trace if item["kind"] == "tool"]
+    assert tool_trace[-1]["total_result_chars"] == expected
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("is_command", [False, True])
+async def test_tool_result_budget_boundary_and_cumulative_limit(is_command):
+    budget = RunBudget(time.monotonic() + 10, max_result_chars=100)
+    wrapper = TutorBudgetMiddleware(budget)
+    request = SimpleNamespace(tool_call=tool_call("get_learning_progress"))
+
+    async def handler(request):
+        message = ToolMessage(content="中" * 100, tool_call_id="budget-boundary")
+        return (
+            Command(update={"messages": [message], "evidence": {"internal": "x" * 5000}})
+            if is_command
+            else message
+        )
+
+    result = await wrapper.awrap_tool_call(request, handler)
+    assert tool_result_chars(result) == budget.result_chars == 100
+    with pytest.raises(DomainError) as error:
+        await wrapper.awrap_tool_call(request, handler)
+    assert error.value.code == "TUTOR_BUDGET_EXCEEDED"
+    assert budget.result_chars == 200 and budget.tool_calls == 2
+
+
+@pytest.mark.parametrize("update", [None, {"evidence": {}}, {"messages": ["untyped"]}])
+def test_invalid_tool_command_fails_closed(update):
+    with pytest.raises(DomainError) as error:
+        tool_result_chars(Command(update=update))
+    assert error.value.code == "TUTOR_TOOL_RESULT_INVALID"
+
+
+def test_tool_message_content_blocks_exclude_internal_artifact():
+    content = [{"type": "text", "text": "部署资料"}]
+    result = ToolMessage(content=content, artifact={"ledger": "x" * 20000}, tool_call_id="blocks")
+    assert tool_result_chars(result) == len(json.dumps(content, ensure_ascii=False))
 
 
 @pytest.mark.asyncio

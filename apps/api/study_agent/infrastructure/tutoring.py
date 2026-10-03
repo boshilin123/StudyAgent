@@ -45,10 +45,16 @@ class TutorRepository:
         finally:
             await connection.close()
 
-    async def conversation(self, conversation_id: UUID) -> TutorConversationModel:
+    async def conversation(
+        self, conversation_id: UUID, *, include_deleted: bool = False
+    ) -> TutorConversationModel:
         async with self.sessions() as session:
             item = await session.get(TutorConversationModel, conversation_id)
-            if item is None or item.scope_key != "single-user":
+            if (
+                item is None
+                or item.scope_key != "single-user"
+                or (item.status == "deleted" and not include_deleted)
+            ):
                 raise DomainError("TUTOR_CONVERSATION_NOT_FOUND", "辅导会话不存在", status_code=404)
             return item
 
@@ -226,7 +232,10 @@ class TutorRepository:
         self, knowledge_base_id: UUID | None, page: int, page_size: int
     ) -> tuple[Sequence[TutorConversationModel], int]:
         async with self.sessions() as session:
-            criteria = [TutorConversationModel.scope_key == "single-user"]
+            criteria = [
+                TutorConversationModel.scope_key == "single-user",
+                TutorConversationModel.status != "deleted",
+            ]
             if knowledge_base_id:
                 criteria.append(TutorConversationModel.knowledge_base_id == knowledge_base_id)
             total = await session.scalar(
@@ -268,8 +277,26 @@ class TutorRepository:
     async def archive(self, conversation_id: UUID) -> TutorConversationModel:
         async with self.sessions() as session:
             item = await session.get(TutorConversationModel, conversation_id)
-            if item is None:
+            if item is None or item.scope_key != "single-user" or item.status == "deleted":
                 raise DomainError("TUTOR_CONVERSATION_NOT_FOUND", "辅导会话不存在", status_code=404)
             item.status = "archived"
             await session.commit()
             return item
+
+    async def rename(self, conversation_id: UUID, title: str) -> TutorConversationModel:
+        async with self.sessions() as session:
+            item = await session.get(TutorConversationModel, conversation_id)
+            if item is None or item.scope_key != "single-user" or item.status == "deleted":
+                raise DomainError("TUTOR_CONVERSATION_NOT_FOUND", "辅导会话不存在", status_code=404)
+            item.title = title
+            await session.commit()
+            return item
+
+    async def delete(self, conversation_id: UUID) -> None:
+        # Keep the audit history and checkpoint pointer; public reads exclude this tombstone.
+        async with self.sessions() as session:
+            item = await session.get(TutorConversationModel, conversation_id)
+            if item is None or item.scope_key != "single-user":
+                raise DomainError("TUTOR_CONVERSATION_NOT_FOUND", "辅导会话不存在", status_code=404)
+            item.status = "deleted"
+            await session.commit()

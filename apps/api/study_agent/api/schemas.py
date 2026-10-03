@@ -152,6 +152,7 @@ class QuestionGenerationJobResponse(BaseModel):
     language: str
     generated_count: int
     rejected_count: int
+    rejected_candidates: list[dict[str, object]] = Field(default_factory=list)
     error_code: str | None
     error_message: str | None
     started_at: datetime | None

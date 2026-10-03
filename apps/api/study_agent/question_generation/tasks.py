@@ -1,4 +1,5 @@
 import asyncio
+from collections import Counter
 from datetime import UTC, datetime
 from decimal import Decimal
 from typing import Any
@@ -13,6 +14,7 @@ from study_agent.config import get_settings
 from study_agent.domain.models import DocumentChunk
 from study_agent.infrastructure.models import (
     DocumentChunkModel,
+    KnowledgeBaseModel,
     KnowledgePointModel,
     KnowledgePointSourceModel,
     MaterialModel,
@@ -137,6 +139,9 @@ def generate_questions(job_id: str, material_id: str) -> dict[str, object]:
                 "generated_count": job.generated_count,
                 "rejected_count": job.rejected_count,
             }
+        knowledge_base = await session.get(KnowledgeBaseModel, material.knowledge_base_id)
+        if knowledge_base is None or knowledge_base.status != "active":
+            raise ValueError("知识库已归档或删除，不能生成题目")
         # Close an interrupted attempt's trace without declaring the whole job
         # failed (which would unblock another job while this one is retrying).
         previous_runs = (
@@ -247,6 +252,14 @@ def generate_questions(job_id: str, material_id: str) -> dict[str, object]:
             difficulty_min=job.difficulty_min,
             difficulty_max=job.difficulty_max,
         )
+        # Validation failures remain outside the question bank, but are retained for review.
+        job.rejected_candidates = [
+            {"reason": item.reason, "question": item.question.model_dump(mode="json")}
+            for item in rejected
+        ] + [
+            {"reason": "超出本次目标题数", "question": item.model_dump(mode="json")}
+            for item in accepted[job.target_question_count :]
+        ]
         session.add(
             WorkflowStepModel(
                 id=uuid4(),
@@ -258,7 +271,11 @@ def generate_questions(job_id: str, material_id: str) -> dict[str, object]:
                     "target_count": job.target_question_count,
                     "execution_kind": "chain",
                 },
-                output_summary={"accepted": len(accepted), "rejected": len(rejected)},
+                output_summary={
+                    "accepted": len(accepted),
+                    "rejected": len(rejected),
+                    "rejected_reasons": dict(Counter(item.reason for item in rejected)),
+                },
                 status="completed",
                 duration_ms=int((datetime.now(UTC) - started).total_seconds() * 1000),
             )
@@ -266,6 +283,15 @@ def generate_questions(job_id: str, material_id: str) -> dict[str, object]:
         job.stage = "persisting"
         job.progress = 75
         await session.commit()
+
+        current_base = await session.scalar(
+            select(KnowledgeBaseModel)
+            .where(KnowledgeBaseModel.id == material.knowledge_base_id)
+            .with_for_update()
+            .execution_options(populate_existing=True)
+        )
+        if current_base is None or current_base.status != "active":
+            raise ValueError("知识库已归档或删除，不能保存新题目")
 
         chunk_ids = {chunk.id for chunk in chunks}
         point_ids: dict[str, UUID] = {}
@@ -314,12 +340,24 @@ def generate_questions(job_id: str, material_id: str) -> dict[str, object]:
                 question.question_type, question.stem, question.correct_answers
             )
             duplicate = await session.scalar(
-                select(QuestionModel).where(
+                select(QuestionModel)
+                .where(
                     QuestionModel.knowledge_base_id == material.knowledge_base_id,
                     QuestionModel.content_hash == content_hash,
                 )
+                .with_for_update()
+                .execution_options(populate_existing=True)
             )
             if duplicate is not None:
+                if duplicate.status == "deleted":
+                    job.rejected_candidates = [
+                        *job.rejected_candidates,
+                        {
+                            "reason": "相同题目已被删除，本次不重新入库",
+                            "question": question.model_dump(mode="json"),
+                        },
+                    ]
+                    continue
                 for rank, (chunk_id, quote) in enumerate(
                     zip(question.source_chunk_ids, question.source_quotes, strict=True), start=1
                 ):
@@ -389,11 +427,35 @@ def generate_questions(job_id: str, material_id: str) -> dict[str, object]:
         ]
         vector_ids = await get_question_index().upsert(records)
         for model, vector_id in zip(saved_models, vector_ids, strict=True):
-            model.vector_id = vector_id
+            # Deletion can occur during vector indexing. Do not leave a stale vector
+            # behind or restore a question the user just removed.
+            current = await session.scalar(
+                select(QuestionModel)
+                .where(QuestionModel.id == model.id)
+                .with_for_update()
+                .execution_options(populate_existing=True)
+            )
+            if current.status == "deleted":
+                await get_question_index().delete_questions([current.id])
+                current.vector_id = None
+            else:
+                current.vector_id = vector_id
 
         job.generated_count = len(saved_models)
-        job.rejected_count = len(rejected) + (len(accepted) - len(saved_models))
-        job.status = "completed" if saved_models else "partial"
+        job.rejected_count = len(job.rejected_candidates)
+        job.status = "completed" if job.generated_count >= job.target_question_count else "partial"
+        if job.status == "partial":
+            reasons = "；".join(
+                f"{reason} {count} 道"
+                for reason, count in Counter(
+                    str(item["reason"]) for item in job.rejected_candidates
+                ).items()
+            )
+            job.error_code = "QUESTION_GENERATION_PARTIAL"
+            job.error_message = (
+                f"目标 {job.target_question_count} 道，通过校验 {job.generated_count} 道，"
+                f"拒绝 {job.rejected_count} 道。" + (reasons or "模型返回的有效题目不足目标数量")
+            )
         job.stage = "completed"
         job.progress = 100
         job.finished_at = datetime.now(UTC)

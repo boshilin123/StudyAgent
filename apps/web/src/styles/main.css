@@ -38,9 +38,14 @@ a { color: inherit; text-decoration: none; }
 .main-content { width: 100%; margin-left: var(--sidebar-width); padding: 30px 44px 60px; transition: margin .2s ease; }
 .topbar { display: flex; justify-content: space-between; align-items: end; margin-bottom: 28px; }
 .topbar h1 { margin: 4px 0 0; font: 700 30px/1.2 Georgia, "Songti SC", serif; }
+.main-content.tutor-page { height: 100vh; height: 100dvh; min-width: 0; padding-bottom: 24px; display: flex; flex-direction: column; overflow: hidden; }
+.tutor-page .topbar { flex: 0 0 auto; }
 .eyebrow, .section-kicker { margin: 0; color: #668174; font-size: 11px; font-weight: 700; letter-spacing: .16em; }
 .status-pill { padding: 8px 12px; border: 1px solid #d5ded7; border-radius: 999px; background: #fff; font-size: 12px; }
 .status-pill i { display: inline-block; width: 7px; height: 7px; margin-right: 7px; border-radius: 50%; background: #59a36a; }
+.status-pill { cursor: pointer; color: inherit; font-family: inherit; }
+.status-pill.checking i { background: #c99736; }
+.status-pill.unavailable i { background: #c65454; }
 .hero-card {
   min-height: 260px; padding: 42px; border-radius: 22px; color: #f7fbf8;
   background: linear-gradient(125deg, #204d3a, #2b654b); display: flex;
@@ -107,7 +112,9 @@ a { color: inherit; text-decoration: none; }
 .base-item small { color: #829087; }
 .base-dot { width: 8px; height: 8px; flex: 0 0 8px; border-radius: 50%; background: #9aa79f; }
 .base-dot.active { background: #5fa26b; }
-.library-header { display: flex; justify-content: space-between; align-items: start; gap: 25px; }
+.library-header { display: flex; justify-content: space-between; align-items: start; gap: 25px; flex-wrap: wrap; }
+.library-header > :first-child { flex: 1 1 240px; min-width: 0; }
+.library-header > .row-inline { flex-wrap: wrap; }
 .library-header h2 { margin: 10px 0 8px; font-size: 29px; }
 .library-header p { margin: 0; color: #6d7e75; }
 .upload-panel { display: flex; align-items: center; gap: 15px; border-style: dashed; background: #f9fbf7; }
@@ -141,7 +148,7 @@ a { color: inherit; text-decoration: none; }
 .mini-options { display: grid; grid-template-columns: repeat(2, 1fr); gap: 7px; color: #687971; font-size: 12px; }
 .mini-options span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .mini-options b { margin-right: 6px; color: #38644f; }
-.question-footer { margin-top: auto; padding-top: 16px; display: flex; align-items: center; justify-content: space-between; color: #89968f; font-size: 12px; }
+.question-footer { margin-top: auto; padding-top: 16px; display: flex; flex-wrap: wrap; gap: 8px; align-items: center; justify-content: space-between; color: #89968f; font-size: 12px; }
 .wide-empty { grid-column: 1 / -1; min-height: 300px; }
 .drawer-heading { padding-bottom: 22px; border-bottom: 1px solid #e4eae5; }
 .drawer-heading h2 { margin: 8px 0 12px; font: 700 28px Georgia, serif; }

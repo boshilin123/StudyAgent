@@ -84,6 +84,19 @@ export interface QuestionGenerationJob extends Job {
   language: string
   generated_count: number
   rejected_count: number
+  rejected_candidates?: Array<{
+    reason: string
+    question: {
+      question_type: QuestionType
+      stem: string
+      options: Array<{ key: string; text: string }> | null
+      correct_answers: string[]
+      explanation: string
+      difficulty: number
+      source_chunk_ids: string[]
+      source_quotes: string[]
+    }
+  }>
 }
 
 export interface SelectionReason {

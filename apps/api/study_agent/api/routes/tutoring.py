@@ -6,6 +6,7 @@ from fastapi import APIRouter, Depends, Query, Response
 from study_agent.api.tutoring_dependencies import get_tutor_service
 from study_agent.api.tutoring_schemas import (
     CreateTutorConversation,
+    RenameTutorConversation,
     SubmitTutorMessage,
     TutorConversationResponse,
     TutorMessageResponse,
@@ -81,3 +82,18 @@ async def archive_conversation(
     conversation_id: UUID, service: TutorDependency
 ) -> TutorConversationResponse:
     return TutorConversationResponse.model_validate(await service.archive(conversation_id))
+
+
+@router.patch("/conversations/{conversation_id}", response_model=TutorConversationResponse)
+async def rename_conversation(
+    conversation_id: UUID, payload: RenameTutorConversation, service: TutorDependency
+) -> TutorConversationResponse:
+    return TutorConversationResponse.model_validate(
+        await service.rename(conversation_id, payload.title)
+    )
+
+
+@router.delete("/conversations/{conversation_id}", status_code=204)
+async def delete_conversation(conversation_id: UUID, service: TutorDependency) -> Response:
+    await service.delete(conversation_id)
+    return Response(status_code=204)

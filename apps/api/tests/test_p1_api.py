@@ -88,6 +88,26 @@ def test_knowledge_base_chinese_text_round_trip(
     assert b"?" not in response.content
 
 
+def test_delete_library_hides_and_preserves_material(
+    api_context: tuple[TestClient, FakeUnitOfWork, FakeObjectStorage],
+) -> None:
+    client, uow, storage = api_context
+    base_id = client.post("/api/knowledge-bases", json={"name": "删除测试"}).json()["id"]
+    upload = client.post(
+        f"/api/knowledge-bases/{base_id}/materials",
+        files={"file": ("notes.md", b"# retained history", "text/markdown")},
+    ).json()
+    assert client.delete(f"/api/knowledge-bases/{base_id}").status_code == 204
+    assert client.delete(f"/api/knowledge-bases/{base_id}").status_code == 204
+    assert client.get("/api/knowledge-bases").json()["total"] == 0
+    assert client.get(f"/api/knowledge-bases/{base_id}").status_code == 404
+    assert client.patch(
+        f"/api/knowledge-bases/{base_id}", json={"status": "active"}
+    ).status_code == 404
+    assert UUID(upload["material"]["id"]) in uow.materials.items
+    assert storage.objects
+
+
 def test_material_upload_duplicate_query_and_delete(
     api_context: tuple[TestClient, FakeUnitOfWork, FakeObjectStorage],
 ) -> None:
