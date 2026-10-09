@@ -6,6 +6,8 @@
 
 角色分工见 [四个 Subagent 实施分工](docs/技术方案/四个Subagent实施分工.md)，学习入口见 [课程知识点与源码导读](docs/技术方案/课程知识点与源码导读.md)，接口见 [学习辅导接口](docs/接口文档/学习辅导接口.md)。
 
+正式学习从 [八章 PDF 教材与阅读顺序](study/README.md) 开始，配合 [学习准备与章节计划](docs/技术方案/学习准备与章节计划.md) 和 [可运行学习实验](examples/learning/README.md)。默认后端环境为 `apps/api/.venv`；运行 `scripts/准备学习环境.ps1` 按开发锁文件安装并验证，避免编辑器与命令行使用不同解释器。
+
 辅导模型可通过 `TUTOR_LLM_*` 独立配置，留空则继承 `LLM_*`。它必须支持工具调用及所选结构化输出组合；旧出题 parser 可用不代表模型能用于辅导。
 
 依赖升级后需要重建应用镜像。数据库正常迁移后，首次启用辅导须显式初始化 PostgreSQL 检查点：
@@ -29,7 +31,7 @@ docker compose up -d api worker web
 
 面向个人职业学习和考试备考的 AI 自适应学习陪练平台。
 
-当前仓库已完成 P0～P8：工程与数据基础、资料解析与双索引、题库生成 RAG、客观题学习闭环、自适应选题、LangChain 引用讲解、Redis 可恢复运行态、Vue 前端闭环、生产部署方案，以及外部 Embedding 与真实模型评测收尾。
+当前仓库已完成 P0～P8：工程与数据基础、资料解析与双索引、基于材料上下文的受控题库生成、客观题学习闭环、自适应选题、LangChain 引用讲解、Redis 可恢复运行态、Vue 前端闭环、生产部署方案，以及外部 Embedding 与真实模型评测收尾。题目生成按字符预算拼接材料；学习辅导 Agent 使用向量检索取证，二者调用路径不同。
 
 P9 增加了 GitHub Actions 干净环境验证和全面真实链路验收，覆盖错误契约、资料去重、重建索引、题库审核、幂等作答与归档保护。
 
@@ -120,12 +122,11 @@ powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\tests\Test-Dev
 后端：
 
 ```powershell
+# 在项目根目录安装锁定依赖并验证学习实验和离线测试。
+powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\准备学习环境.ps1
 Set-Location apps/api
-python -m venv .venv
-.\.venv\Scripts\Activate.ps1
-python -m pip install -r requirements-dev.lock
-python -m pip install --no-deps -e .
-uvicorn study_agent.main:app --loop study_agent.runtime:create_event_loop --reload
+& '.\.venv\Scripts\python.exe' -m uvicorn study_agent.main:app `
+  --loop study_agent.runtime:create_event_loop --reload
 ```
 
 前端：
@@ -202,7 +203,7 @@ powershell.exe -NoProfile -ExecutionPolicy Bypass `
   -File .\scripts\验证干净环境.ps1
 ```
 
-只验证前端时添加 `-SkipBackendInstall`。
+只验证前端时添加 `-SkipBackendInstall`。验证结束后默认清理临时环境（失败时也清理），日志和浏览器测试产物保存在 `tmp/verification-results/`。需要排查完整环境时添加 `-KeepEnvironment`，排查结束后自行清理保留目录。Mypy、Pytest 和 npm 缓存统一写入项目 `tmp` 下的对应目录。
 
 ## 生产构建
 

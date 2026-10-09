@@ -1,0 +1,577 @@
+{
+  "checked_at": "2026-10-07T17:46:36.675937+08:00",
+  "interpreter": "apps/api/.venv/Scripts/python.exe",
+  "python": "3.12.0",
+  "git_head": "72dea46d2249d34193a647e23c2b81b440da8402",
+  "working_tree_note": "Includes pre-existing local edits and this learning preparation.",
+  "versions": {
+    "alembic": "1.20.0",
+    "amqp": "5.4.0",
+    "annotated-doc": "0.0.5",
+    "annotated-types": "0.8.0",
+    "anyio": "4.15.1",
+    "argon2-cffi": "25.1.0",
+    "argon2-cffi-bindings": "26.1.0",
+    "asyncpg": "0.31.0",
+    "billiard": "4.3.0",
+    "cachetools": "7.2.0",
+    "celery": "5.6.3",
+    "certifi": "2026.7.22",
+    "cffi": "2.1.1",
+    "charset-normalizer": "3.5.2",
+    "click": "8.5.0",
+    "click-didyoumean": "0.3.1",
+    "click-plugins": "1.1.1.2",
+    "click-repl": "0.4.0",
+    "colorama": "0.4.6",
+    "coverage": "7.16.2",
+    "distro": "1.9.0",
+    "et-xmlfile": "2.0.0",
+    "fastapi": "0.142.1",
+    "greenlet": "3.5.6",
+    "grpcio": "1.84.0",
+    "h11": "0.16.0",
+    "httpcore": "1.0.9",
+    "httpcore2": "2.13.1",
+    "httptools": "0.8.0",
+    "httpx": "0.28.1",
+    "httpx2": "2.13.1",
+    "idna": "3.20",
+    "iniconfig": "2.3.0",
+    "jiter": "0.17.0",
+    "jsonpatch": "1.33",
+    "jsonpointer": "3.1.1",
+    "kombu": "5.6.2",
+    "langchain": "1.4.3",
+    "langchain-core": "1.6.6",
+    "langchain-openai": "1.6.7",
+    "langchain-protocol": "0.0.19",
+    "langchain-text-splitters": "1.1.2",
+    "langgraph": "1.2.12",
+    "langgraph-checkpoint": "4.2.0",
+    "langgraph-checkpoint-postgres": "3.1.2",
+    "langgraph-prebuilt": "1.1.0",
+    "langgraph-sdk": "0.4.5",
+    "langsmith": "0.14.1",
+    "librt": "0.16.0",
+    "lxml": "6.1.3",
+    "mako": "1.4.3",
+    "markupsafe": "3.0.3",
+    "minio": "7.2.20",
+    "mypy": "1.19.1",
+    "mypy-extensions": "1.1.0",
+    "numpy": "2.5.3",
+    "openai": "2.54.0",
+    "openpyxl": "3.1.5",
+    "opentelemetry-api": "1.45.0",
+    "orjson": "3.12.0",
+    "ormsgpack": "1.12.2",
+    "packaging": "25.0",
+    "pandas": "3.0.6",
+    "pathspec": "1.1.1",
+    "pillow": "12.3.0",
+    "pluggy": "1.6.0",
+    "prompt-toolkit": "3.0.53",
+    "protobuf": "7.36.2",
+    "psycopg": "3.3.6",
+    "psycopg-binary": "3.3.6",
+    "psycopg-pool": "3.3.3",
+    "pycparser": "3.0",
+    "pycryptodome": "3.23.0",
+    "pydantic": "2.13.5",
+    "pydantic-core": "2.46.5",
+    "pydantic-settings": "2.15.0",
+    "pygments": "2.21.0",
+    "pymilvus": "2.6.17",
+    "pypdf": "6.19.0",
+    "pytest": "8.4.2",
+    "pytest-asyncio": "0.26.0",
+    "pytest-cov": "6.3.0",
+    "python-dateutil": "2.9.0.post0",
+    "python-docx": "1.2.0",
+    "python-dotenv": "1.2.3",
+    "python-multipart": "0.0.32",
+    "python-pptx": "1.0.2",
+    "pyyaml": "6.0.3",
+    "redis": "6.4.0",
+    "regex": "2026.9.29",
+    "reportlab": "4.5.1",
+    "requests": "2.34.2",
+    "requests-toolbelt": "1.0.0",
+    "ruff": "0.16.9",
+    "six": "1.17.0",
+    "sniffio": "1.3.1",
+    "sqlalchemy": "2.1.1",
+    "starlette": "1.7.0",
+    "structlog": "25.5.0",
+    "tenacity": "9.1.4",
+    "tiktoken": "0.14.0",
+    "tqdm": "4.70.1",
+    "truststore": "0.10.4",
+    "typing-extensions": "4.16.0",
+    "typing-inspection": "0.4.4",
+    "tzdata": "2026.4",
+    "tzlocal": "5.4.4",
+    "urllib3": "2.8.0",
+    "uuid-utils": "0.17.1",
+    "uvicorn": "0.54.0",
+    "vine": "5.1.0",
+    "watchfiles": "1.3.0",
+    "wcwidth": "0.9.1",
+    "websockets": "16.1.1",
+    "xlsxwriter": "3.2.9",
+    "xxhash": "4.0.1",
+    "zstandard": "0.25.0"
+  },
+  "source_sha256": {
+    "apps/api/requirements-dev.lock": "5ed5b0dc1ef0d4f5710eb362861685634d9722c7778f8ea5400e610d996684d1",
+    "apps/api/study_agent/agents/tutor/agent.py": "36a738d2ffebb743673038dfc856e4d52c86023a4495f895a5ad77df2b57e8d9",
+    "apps/api/study_agent/application/retrieval.py": "d55d44236f5ac84e88eaa9b2032362bc761c14cf0ab7c09df069acbb30a1df8e",
+    "apps/api/study_agent/question_generation/tasks.py": "07726ccc468dfa6755f524a60862d83768e495ba4c9bad9818b1d2a91b64eee6",
+    "examples/learning/langgraph_review.py": "336a3cc2b956c168b5d1dba844e9397512f1e0bf1fd5627d747d5e0597610670",
+    "examples/learning/agent_tool_loop.py": "12a1f079ec07364e61c90fbbc5f2e52828e3a424882254504f04a70c6b7db600",
+    "examples/learning/rag_context.py": "fdb110127bcc534db9a72a80a693d214ed93e010468d45d3f047214c095b32c3",
+    "apps/api/study_agent/agents/tutor/prompts.py": "cbf27186d5620a16d535f1fe8bb70977c1f9fb3deb528c33c70265bf583714d9",
+    "apps/api/study_agent/agents/tutor/middleware.py": "5f02af31a48d023832175cdf7a1cc824c6d34a2d2dedec963a3319ab19b12377",
+    "apps/api/tests/test_tutor_live_acceptance.py": "b9e0a6213f39c208e82e53f1a52504a2f551c3dc093a8599251152d92a757080",
+    "scripts/验证学习准备.py": "321f38b31467e892c34fd498f70d9340f4151013eca083d9c184bfe075df947a",
+    "scripts/准备学习环境.ps1": "00342fc50a94fc7958c5123f3ef773206c7a60076a67db35b11fb097eb73a85d",
+    "apps/api/pyproject.toml": "bd075b5869fa81dd6966c523ff0961ee7ef7f603f56a0cde4c345affa6b32805",
+    ".vscode/settings.json": "16128faf419e1de8ba66817eb1b3b805d00c0d4743c07514ba0e8cf6e0df10aa"
+  },
+  "checks": {
+    "pip_check": {
+      "exit_code": 0,
+      "seconds": 1.094,
+      "log": "tmp/learning-validation/pip-check.txt"
+    },
+    "rag_context": {
+      "exit_code": 0,
+      "seconds": 4.859,
+      "log": "tmp/learning-validation/rag_context.txt"
+    },
+    "agent_tool_loop": {
+      "exit_code": 0,
+      "seconds": 1.703,
+      "log": "tmp/learning-validation/agent_tool_loop.txt"
+    },
+    "langgraph_review": {
+      "exit_code": 0,
+      "seconds": 1.0,
+      "log": "tmp/learning-validation/langgraph_review.txt"
+    },
+    "offline": {
+      "exit_code": 0,
+      "seconds": 99.516,
+      "log": "tmp/learning-validation/offline.txt",
+      "counts": {
+        "tests": 149,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      }
+    },
+    "ruff": {
+      "exit_code": 0,
+      "seconds": 0.125,
+      "log": "tmp/learning-validation/ruff.txt"
+    },
+    "postgres": {
+      "exit_code": 0,
+      "seconds": 21.812,
+      "log": "tmp/learning-validation/postgres.txt",
+      "counts": {
+        "tests": 19,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      }
+    },
+    "final-tutor": {
+      "exit_code": 0,
+      "counts": {
+        "tests": 57,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      "log": "tmp/learning-validation/final-tutor.txt"
+    },
+    "final-services": {
+      "exit_code": 0,
+      "counts": {
+        "tests": 20,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      "log": "tmp/learning-validation/final-services.txt"
+    },
+    "browser_vertical": {
+      "exit_code": 0,
+      "stats": {
+        "startTime": "2026-10-07T09:59:49.235Z",
+        "duration": 6389.353,
+        "expected": 1,
+        "skipped": 0,
+        "unexpected": 0,
+        "flaky": 0
+      },
+      "evidence_kind": "Vue + API + scripted create_agent + real PG/Milvus"
+    },
+    "browser_fixture": {
+      "exit_code": 0,
+      "passed": 38,
+      "skipped": 1,
+      "skipped_case_completed_separately": true,
+      "evidence_kind": "real Chrome + HTTP fixtures; tool session 54567"
+    },
+    "frontend_typecheck": {
+      "exit_code": 0,
+      "evidence": "tool session 54567"
+    },
+    "mypy": {
+      "exit_code": 0,
+      "source_files": 78,
+      "evidence": "tool session 50476"
+    },
+    "powershell_syntax": {
+      "exit_code": 0,
+      "version": "Windows PowerShell 5.1"
+    }
+  },
+  "experiments": {
+    "rag_context": {
+      "evidence_kind": "production character splitter + generation context; no retrieval",
+      "chunk_size_unit": "characters",
+      "stable_ids": true,
+      "total_chunks": 64,
+      "selected_chunks": 37,
+      "context_chars": 23984,
+      "configured_max_chars": 24000,
+      "selected_pages": [
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9,
+        10,
+        11,
+        12,
+        13,
+        14,
+        15,
+        16,
+        17,
+        18,
+        19,
+        20,
+        21,
+        22,
+        23,
+        24,
+        25,
+        26,
+        27,
+        28,
+        29,
+        30,
+        31,
+        32,
+        33,
+        34,
+        35,
+        36,
+        37
+      ],
+      "last_page_included": false,
+      "limitation": "当前按顺序选取前部片段；不能保证长资料完整覆盖。",
+      "budget_note": "当前计数未包含片段分隔符，且保留超预算首片段；不是严格总长上限。"
+    },
+    "agent_tool_loop": {
+      "evidence_kind": "production Agent graph + scripted model + fixed tool fixtures",
+      "cases": [
+        {
+          "empty_retrieval": false,
+          "status": "answered",
+          "answer": "TCP 用三次握手建立连接。",
+          "citation_ids": [
+            "fixture:tcp:1"
+          ],
+          "flags": [
+            "materials"
+          ],
+          "usage": {
+            "model_calls": 2,
+            "tool_calls": 1,
+            "total_tokens": null,
+            "known": false
+          },
+          "tool_message_call_id": "call-1"
+        },
+        {
+          "empty_retrieval": true,
+          "status": "insufficient_evidence",
+          "answer": "当前资料没有依据。",
+          "citation_ids": [],
+          "flags": [
+            "materials"
+          ],
+          "usage": {
+            "model_calls": 2,
+            "tool_calls": 1,
+            "total_tokens": null,
+            "known": false
+          },
+          "tool_message_call_id": "call-1"
+        }
+      ]
+    },
+    "langgraph_review": {
+      "evidence_kind": "real LangGraph + fixed fixture + InMemorySaver",
+      "review_cases": [
+        {
+          "decision": true,
+          "status": "accepted",
+          "trace": [
+            "retrieve",
+            "draft",
+            "review"
+          ],
+          "paused_at": "review"
+        },
+        {
+          "decision": false,
+          "status": "rejected",
+          "trace": [
+            "retrieve",
+            "draft",
+            "review"
+          ],
+          "paused_at": "review"
+        }
+      ],
+      "missing_case": {
+        "topic": "量子纠缠",
+        "evidence": "",
+        "answer": "当前固定资料没有依据。",
+        "status": "insufficient_evidence",
+        "trace": [
+          "retrieve",
+          "missing"
+        ]
+      }
+    }
+  },
+  "passed": true,
+  "finalized_at": "2026-10-07T18:04:31.048686+08:00",
+  "naming_aliases": {
+    "StudyStateStore": true,
+    "RedisStudyStateStore": true,
+    "AgentRunModel": true,
+    "AgentStepModel": true,
+    "build_knowledge_point_chain": true,
+    "build_question_chain": true
+  },
+  "final_service_case_counts": {
+    "postgres_scripted_model": 19,
+    "real_provider_two_questions": 1
+  },
+  "live_evidence": [
+    {
+      "intent": "materials",
+      "elapsed_seconds": 3.765,
+      "model": "deepseek-flash",
+      "provider": "configured OpenAI-compatible endpoint (not disclosed)",
+      "tools": [
+        "search_learning_materials"
+      ],
+      "response": {
+        "turn_id": "00da7e01-44a9-4c2f-bb93-3cb19f909f3c",
+        "status": "completed",
+        "message": "根据当前检索到的资料，TCP 三次握手的步骤如下：\n\n1. **第一次握手**：客户端发送 SYN 报文，向服务器发起连接请求。\n2. **第二次握手**：服务器收到后回复 SYN + ACK，表示同意连接并确认收到客户端的请求。\n3. **第三次握手**：客户端再回复一个 ACK，确认收到服务器的响应，连接建立完成。\n\n资料还指出，三次握手的作用是**确认双方的发送和接收能力，并同步初始序列号**。\n\n补充一点容易混淆的地方：资料特别提醒，TCP 是可靠字节流，UDP 是无连接的数据报，**不能把 UDP 说成有 TCP 握手**——也就是说三次握手是 TCP 特有的机制，UDP 并不存在这一过程。\n\n（以上内容均来自本轮检索到的资料片段，见引用。）",
+        "mode": "agent",
+        "answer_status": "answered",
+        "citations": [
+          {
+            "evidence_id": "chunk:146dbf71-29a9-4793-ae35-52fba9e84a04:cb04bb566cd476713990040de7844b72da17fbccf7e78656e6303fcb1170d0d3",
+            "material_id": "6df92163-8a62-4667-8d22-cbb16edaab36",
+            "chunk_id": "146dbf71-29a9-4793-ae35-52fba9e84a04",
+            "title": "测试资料",
+            "page_start": 2,
+            "page_end": 2,
+            "quote": "TCP三次握手：客户端发送SYN；服务器回复SYN和ACK；客户端回复ACK。三次握手确认双方发送接收能力并同步初始序列号。TCP是可靠字节流，UDP是无连接的数据报；不能把UDP说成有TCP握手。",
+            "content_hash": "cb04bb566cd476713990040de7844b72da17fbccf7e78656e6303fcb1170d0d3",
+            "valid": true
+          }
+        ],
+        "suggestions": [],
+        "suggested_questions": [
+          "为什么三次握手不能改成两次？",
+          "TCP 四次挥手的过程是怎样的？",
+          "SYN 洪泛攻击与三次握手有什么关系？"
+        ],
+        "usage": {
+          "model_calls": 2,
+          "tool_calls": 1,
+          "total_tokens": 2694,
+          "known": true
+        },
+        "idempotent_replay": false,
+        "error_code": null,
+        "error_message": null
+      },
+      "trace": [
+        {
+          "kind": "metadata",
+          "execution_kind": "agent",
+          "graph_version": "tutor-v1",
+          "prompt_version": "tutor-v1.1"
+        },
+        {
+          "kind": "model",
+          "sequence": 1,
+          "usage_known": true
+        },
+        {
+          "kind": "tool",
+          "name": "search_learning_materials",
+          "sequence": 1,
+          "content_chars": 523,
+          "total_result_chars": 523
+        },
+        {
+          "kind": "model",
+          "sequence": 2,
+          "usage_known": true
+        }
+      ],
+      "provider_error": {},
+      "infrastructure": "real PostgreSQL + Milvus + provider + embeddings"
+    },
+    {
+      "intent": "mistakes",
+      "elapsed_seconds": 6.875,
+      "model": "deepseek-flash",
+      "provider": "configured OpenAI-compatible endpoint (not disclosed)",
+      "tools": [
+        "get_learning_progress",
+        "list_recent_mistakes",
+        "get_answered_question_context"
+      ],
+      "response": {
+        "turn_id": "34bc263f-3c3f-4f7e-b08a-14614925f04c",
+        "status": "completed",
+        "message": "## 一、当前学习进度（截至 2026-10-07 09:57 UTC）\n\n- 已答题数：1 题；正确 0 题；正确率 0.0%\n- 到期复习：0 条\n- 薄弱知识点：TCP 三次握手（掌握度 0.24，样本量 1）\n\n说明：以上仅为 1 道题的统计，样本量极小，不能据此推断整体网络知识水平，只能说明该知识点当前尚未掌握。\n\n## 二、近期错题分析（近 30 天，共 1 条）\n\n**题目**：TCP 通过三次握手建立连接。（判断题）\n**你的作答**：false（即判为“错误”）\n**判定**：incorrect，得分 0.0\n**正确答案**：正确\n**解析**：TCP 三次握手顺序为 SYN、SYN+ACK、ACK。\n\n**错因分析**：题干是一句关于 TCP 连接建立方式的陈述，你的作答为“错误”，而正确答案是“正确”，说明你把“TCP 通过三次握手建立连接”这一正确表述判成了错误。结合解析与资料原文，TCP 建立连接确实要经过 SYN → SYN+ACK → ACK 三步，用于确认双方收发能力并同步初始序列号；资料还特别提示“不能把 UDP 说成有 TCP 握手”，即容易混淆的点在于 TCP 与 UDP 的连接特性。因此本次错误的可能原因是：对“三次握手属于 TCP 的固有机制”这一基本事实判断反了，或把 UDP 的无连接特性误套到 TCP 上。需要说明的是，本题只有判断题作答记录，没有你的思考过程，以上只是基于题干、作答与解析的推断，不能确定你的具体误解点。\n\n## 三、复习顺序建议\n\n由于目前只有 1 个薄弱知识点，复习顺序只能给出单点建议，不构成完整计划：\n\n1. **第一优先：TCP 三次握手（掌握度 0.24）**——先记牢三步报文顺序：客户端 SYN → 服务器 SYN+ACK → 客户端 ACK，并理解其目的（确认双方收发能力、同步初始序列号）。\n2. **第二优先：TCP 与 UDP 的对比**——重点区分“TCP 面向连接、可靠字节流”与“UDP 无连接数据报”，避免再把两者特性混用。\n3. 复习后再做同类判断题或简答题自测，用新一次作答结果更新掌握度判断。\n\n以上复习顺序为建议，未写入任何学习计划；到期复习当前为 0 条，暂无系统安排的复习任务。",
+        "mode": "agent",
+        "answer_status": "answered",
+        "citations": [
+          {
+            "evidence_id": "chunk:146dbf71-29a9-4793-ae35-52fba9e84a04:cb04bb566cd476713990040de7844b72da17fbccf7e78656e6303fcb1170d0d3",
+            "material_id": "6df92163-8a62-4667-8d22-cbb16edaab36",
+            "chunk_id": "146dbf71-29a9-4793-ae35-52fba9e84a04",
+            "title": "测试资料",
+            "page_start": 2,
+            "page_end": 2,
+            "quote": "TCP三次握手：客户端发送SYN；服务器回复SYN和ACK；客户端回复ACK。三次握手确认双方发送接收能力并同步初始序列号。TCP是可靠字节流，UDP是无连接的数据报；不能把UDP说成有TCP握手。",
+            "content_hash": "cb04bb566cd476713990040de7844b72da17fbccf7e78656e6303fcb1170d0d3",
+            "valid": true
+          }
+        ],
+        "suggestions": [
+          "先背记 TCP 三次握手的报文顺序：SYN → SYN+ACK → ACK，并说出每一步的作用",
+          "用对比表整理 TCP（面向连接、可靠字节流）与 UDP（无连接数据报）的差异",
+          "复习后做 2-3 道 TCP 握手相关判断题自测，检验是否真正掌握"
+        ],
+        "suggested_questions": [
+          "TCP 三次握手每一步分别起什么作用？",
+          "为什么 TCP 需要三次握手而不是两次？",
+          "TCP 和 UDP 在连接方式上有什么区别？"
+        ],
+        "usage": {
+          "model_calls": 4,
+          "tool_calls": 3,
+          "total_tokens": 5496,
+          "known": true
+        },
+        "idempotent_replay": false,
+        "error_code": null,
+        "error_message": null
+      },
+      "trace": [
+        {
+          "kind": "metadata",
+          "execution_kind": "agent",
+          "graph_version": "tutor-v1",
+          "prompt_version": "tutor-v1.1"
+        },
+        {
+          "kind": "model",
+          "sequence": 1,
+          "usage_known": true
+        },
+        {
+          "kind": "tool",
+          "name": "get_learning_progress",
+          "sequence": 1,
+          "content_chars": 265,
+          "total_result_chars": 265
+        },
+        {
+          "kind": "model",
+          "sequence": 2,
+          "usage_known": true
+        },
+        {
+          "kind": "tool",
+          "name": "list_recent_mistakes",
+          "sequence": 2,
+          "content_chars": 896,
+          "total_result_chars": 1161
+        },
+        {
+          "kind": "model",
+          "sequence": 3,
+          "usage_known": true
+        },
+        {
+          "kind": "tool",
+          "name": "get_answered_question_context",
+          "sequence": 3,
+          "content_chars": 56,
+          "total_result_chars": 1217
+        },
+        {
+          "kind": "model",
+          "sequence": 4,
+          "usage_known": true
+        }
+      ],
+      "provider_error": {},
+      "infrastructure": "real PostgreSQL + Milvus + provider + embeddings"
+    }
+  ],
+  "qualitative_review": {
+    "reviewer": "Codex逐条阅读；不是独立人工标注质量集",
+    "first_attempt": "技术链路通过；占位题干导致模型从来源推测考点，不能作为教学诊断证据。",
+    "changes": "有题意的TCP判断题fixture；增加题干/作答/解析约束；Prompt tutor-v1.1并统一trace版本常量。",
+    "materials": "握手顺序和作用符合原文，当前第2页引用有效。",
+    "mistakes": "工具统计与1次错答一致，建议未写库；明确推断限制，但仍有尚未掌握的偏强措辞。",
+    "limits": [
+      "两个问题不能证明通用模型质量",
+      "一次错答不能确定具体错因或整体掌握程度",
+      "提示词不是语义正确性的硬校验",
+      "长资料仍是前部片段拼接，未改为完整分批生成"
+    ]
+  },
+  "cleanup": {
+    "temporary_browser_server_stopped": true,
+    "owned_postgres_entities_and_checkpoint_removed": true,
+    "owned_milvus_collection_removed": true,
+    "local_dependency_services": "postgres/redis/minio/etcd/milvus remain running"
+  }
+}

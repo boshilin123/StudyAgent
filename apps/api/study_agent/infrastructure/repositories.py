@@ -776,7 +776,11 @@ class SqlAlchemyStudySessionRepository:
     async def list(
         self, *, knowledge_base_id: UUID | None, page: int, page_size: int
     ) -> tuple[Sequence[StudySession], int]:
-        filters = []
+        filters: list[ColumnElement[bool]] = [
+            StudySessionModel.knowledge_base_id.in_(
+                select(KnowledgeBaseModel.id).where(KnowledgeBaseModel.status != "deleted")
+            )
+        ]
         if knowledge_base_id:
             filters.append(StudySessionModel.knowledge_base_id == knowledge_base_id)
         total = int(
@@ -890,7 +894,11 @@ class SqlAlchemyMasteryRepository:
         return _mastery_from_model(model)
 
     async def list(self, knowledge_base_id: UUID | None) -> Sequence[MasteryRecord]:
-        stmt = select(MasteryRecordModel)
+        stmt = select(MasteryRecordModel).where(
+            MasteryRecordModel.knowledge_base_id.in_(
+                select(KnowledgeBaseModel.id).where(KnowledgeBaseModel.status != "deleted")
+            )
+        )
         if knowledge_base_id:
             stmt = stmt.where(MasteryRecordModel.knowledge_base_id == knowledge_base_id)
         stmt = stmt.order_by(MasteryRecordModel.mastery_score, MasteryRecordModel.updated_at.desc())
@@ -941,7 +949,13 @@ class SqlAlchemyReviewTaskRepository:
     async def list_due(
         self, *, knowledge_base_id: UUID | None, due_before: datetime
     ) -> Sequence[ReviewTask]:
-        filters = [ReviewTaskModel.status == "pending", ReviewTaskModel.due_at <= due_before]
+        filters = [
+            ReviewTaskModel.status == "pending",
+            ReviewTaskModel.due_at <= due_before,
+            ReviewTaskModel.knowledge_base_id.in_(
+                select(KnowledgeBaseModel.id).where(KnowledgeBaseModel.status != "deleted")
+            ),
+        ]
         if knowledge_base_id:
             filters.append(ReviewTaskModel.knowledge_base_id == knowledge_base_id)
         stmt = select(ReviewTaskModel).where(*filters).order_by(ReviewTaskModel.due_at)

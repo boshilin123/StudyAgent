@@ -10,6 +10,7 @@ __pycache__/
 .mypy_cache/
 .ruff_cache/
 .coverage
+.coverage.*
 htmlcov/
 .venv/
 dist/
@@ -30,10 +31,13 @@ apps/web/.npm-cache/
 Thumbs.db
 
 # Runtime data
+data/*
+!data/uploads/
 data/uploads/*
 !data/uploads/.gitkeep
 data/mypy-cache/
 logs/
+*.log
 tmp/
 
 # Local backups

@@ -5,12 +5,15 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
 
 WORKDIR /app
 
-COPY pyproject.toml requirements.lock ./
+COPY requirements.lock ./
+RUN pip install --no-cache-dir -r requirements.lock
+
+COPY pyproject.toml ./
 COPY study_agent ./study_agent
 COPY migrations ./migrations
 COPY alembic.ini ./
 
-RUN pip install --no-cache-dir -r requirements.lock && pip install --no-cache-dir --no-deps .
+RUN pip install --no-cache-dir --no-deps .
 
 EXPOSE 8000
 CMD ["uvicorn", "study_agent.main:app", "--host", "0.0.0.0", "--port", "8000"]

@@ -16,7 +16,7 @@ from study_agent.application.retrieval import LearningMaterialRetrieval
 from study_agent.config import Settings
 from study_agent.domain.models import DocumentChunk
 from study_agent.infrastructure.checkpointer import psycopg_connection_string
-from study_agent.infrastructure.models import DocumentChunkModel
+from study_agent.infrastructure.models import DocumentChunkModel, KnowledgePointModel, QuestionModel
 from study_agent.ingestion.embeddings import build_embeddings
 from study_agent.ingestion.vector_index import MilvusDocumentIndex
 from study_agent.llm.models import get_chat_model
@@ -93,6 +93,16 @@ async def test_q01_q02_real_provider_tool_loop_and_distinct_business_intents(tut
         data.retrieval = LearningMaterialRetrieval(data.factory, index)
         # Real learning facts are created through the original application service.
         view = await create_session(data, mode="practice")
+        # A meaningful fixture permits semantic review; placeholder stems only test transport.
+        async with data.factory() as session:
+            question_row = await session.get(QuestionModel, view.current_question.id)
+            assert question_row is not None
+            question_row.stem = "TCP 通过三次握手建立连接。"
+            question_row.explanation = "TCP 三次握手顺序为 SYN、SYN+ACK、ACK。"
+            point_row = await session.get(KnowledgePointModel, question_row.knowledge_point_id)
+            assert point_row is not None
+            point_row.name = "TCP 三次握手"
+            await session.commit()
         await submit(data, view.session.id, view.current_question.id, uuid4(), answer=False)
         data.settings = settings.model_copy(update={"tutor_timeout_seconds": 90})
         for question, intent in [

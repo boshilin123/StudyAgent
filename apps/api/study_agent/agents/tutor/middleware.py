@@ -11,6 +11,7 @@ from langchain_core.messages import AIMessage, ToolMessage
 from langgraph.types import Command
 from pydantic import BaseModel
 
+from study_agent.agents.tutor.prompts import TUTOR_GRAPH_VERSION, TUTOR_PROMPT_VERSION
 from study_agent.domain.errors import DomainError
 
 
@@ -78,8 +79,8 @@ class RunBudget:
             {
                 "kind": "metadata",
                 "execution_kind": "agent",
-                "graph_version": "tutor-v1",
-                "prompt_version": "tutor-v1",
+                "graph_version": TUTOR_GRAPH_VERSION,
+                "prompt_version": TUTOR_PROMPT_VERSION,
             }
         ]
     )

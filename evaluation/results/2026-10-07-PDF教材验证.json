@@ -1,0 +1,337 @@
+{
+  "checked_at": "2026-10-07T19:05:36.581953+08:00",
+  "interpreter": "apps/api/.venv/Scripts/python.exe",
+  "source_baseline": "72dea46 + current working tree; includes pre-existing edits and learning preparation",
+  "production_behavior_changes_this_pdf_task": "none; corrected one LangGraph example comment and README explanation",
+  "versions": {
+    "python": "3.12.0",
+    "langchain": "1.4.3",
+    "langgraph": "1.2.12"
+  },
+  "totals": {
+    "pdfs": 8,
+    "pages": 130,
+    "figures": 59,
+    "screenshots_occurrences": 22,
+    "unique_screenshot_assets": 13,
+    "vector_diagrams": 37,
+    "tables": 53,
+    "complete_experiments_passed": 12
+  },
+  "files": [
+    {
+      "number": 1,
+      "title": "项目全貌与学习闭环",
+      "file": "study/第01章_项目全貌与学习闭环.pdf",
+      "pages": 13,
+      "figures": 7,
+      "tables": 7,
+      "chars": 13375,
+      "bookmarks": 11,
+      "bytes": 797597,
+      "experiments": [
+        {
+          "name": "route_inventory",
+          "stdout": "/api/knowledge-bases ['get', 'post']\n/api/questions ['get']\n/api/study/sessions ['post']\n/api/tutor/conversations ['get', 'post']\nlangchain: 1.4.3\nlanggraph: 1.2.12\nchunk_chars: 800 120\n",
+          "stderr": ""
+        }
+      ],
+      "sha256": "35177ae5c319264579ff2d0304150d1faf48005d2440f888bc1dcb758891d9aa",
+      "toc_link_count": 22,
+      "visual_qa": "all pages in contact sheets + full-size review of code, tables, diagrams and screenshots",
+      "geometry_qa": "passed: text stays inside inspected page bounds",
+      "source_range_qa": "passed"
+    },
+    {
+      "number": 2,
+      "title": "资料解析、字符分块与元数据",
+      "file": "study/第02章_资料解析与字符分块及元数据.pdf",
+      "pages": 15,
+      "figures": 6,
+      "tables": 7,
+      "chars": 21181,
+      "bookmarks": 11,
+      "bytes": 686954,
+      "experiments": [
+        {
+          "name": "ch02_parse_chunks",
+          "stdout": "documents: 2\nheading: ['网络', '三次握手']\nchunks: 4\nstable_ids: True\nsame_text_other_material_same_id: False\n0 11 7 ['网络'] 'TCP 提供可靠传输。'\n1 15 11 ['网络', '三次握手'] '客户端发送 SYN，服务器回复'\n2 17 8 ['网络', '三次握手'] 'SYN+ACK，客户端回复 ACK'\n3 1 1 ['网络', '三次握手'] '。'\nempty_error: document contains no extractable text\n",
+          "stderr": ""
+        }
+      ],
+      "sha256": "14f06c8df9b8702739bca8b41e3fc7a3d96edd00fbed5b2bcd0e13a0679e6829",
+      "toc_link_count": 22,
+      "visual_qa": "all pages in contact sheets + full-size review of code, tables, diagrams and screenshots",
+      "geometry_qa": "passed: text stays inside inspected page bounds",
+      "source_range_qa": "passed"
+    },
+    {
+      "number": 3,
+      "title": "Embedding、Milvus 与 RAG 检索",
+      "file": "study/第03章_Embedding与Milvus及RAG检索.pdf",
+      "pages": 18,
+      "figures": 7,
+      "tables": 6,
+      "chars": 30477,
+      "bookmarks": 11,
+      "bytes": 969182,
+      "experiments": [
+        {
+          "name": "ch03_dense_filter",
+          "stdout": "dimension: 32\nstored_ids: ['tcp-a', 'redis-a', 'tcp-b']\nfiltered_ids: ['tcp-a', 'redis-a']\nscores: [1.0, 0.0]\nexternal_requests: 0\n",
+          "stderr": ""
+        },
+        {
+          "name": "ch03_evidence_pack",
+          "stdout": "quote: 三次握手\npage: 3\nfallback_to_content: True\nversion_in_id: True\ndatabase_requests: 0\n",
+          "stderr": ""
+        }
+      ],
+      "sha256": "7cef89b8f48f83d22b1317e3633a397292267ae0686fce1fa8aaff1345eaf264",
+      "toc_link_count": 22,
+      "visual_qa": "all pages in contact sheets + full-size review of code, tables, diagrams and screenshots",
+      "geometry_qa": "passed: text stays inside inspected page bounds",
+      "source_range_qa": "passed"
+    },
+    {
+      "number": 4,
+      "title": "LCEL出题、结构化输出与质量门禁",
+      "file": "study/第04章_LCEL出题与结构化输出及质量门禁.pdf",
+      "pages": 17,
+      "figures": 9,
+      "tables": 7,
+      "chars": 23515,
+      "bookmarks": 11,
+      "bytes": 952012,
+      "experiments": [
+        {
+          "name": "ch04_lcel_grounding",
+          "stdout": "parsed = 2\naccepted = 1 rejected = 1\nreason = 引文无法在原文片段中匹配\n",
+          "stderr": ""
+        },
+        {
+          "name": "ch04_character_budget",
+          "stdout": "over_budget = True\nfirst_included = True\nsecond_included = False\n",
+          "stderr": ""
+        }
+      ],
+      "sha256": "f667551d6ec81b500f739b0320403a89af358ec2b5b3fc323b30344f67e7e13c",
+      "toc_link_count": 22,
+      "visual_qa": "all pages in contact sheets + full-size review of code, tables, diagrams and screenshots",
+      "geometry_qa": "passed: text stays inside inspected page bounds",
+      "source_range_qa": "passed"
+    },
+    {
+      "number": 5,
+      "title": "辅导 Agent、工具与 Middleware",
+      "file": "study/第05章_辅导Agent与工具及Middleware.pdf",
+      "pages": 17,
+      "figures": 8,
+      "tables": 7,
+      "chars": 24178,
+      "bookmarks": 11,
+      "bytes": 889242,
+      "experiments": [
+        {
+          "name": "ch05_agent_tool_loop_and_citation",
+          "stdout": "case: answered ['fixture:tcp:1'] {'model_calls': 2, 'tool_calls': 1, 'total_tokens': None, 'known': False}\ncase: insufficient_evidence [] {'model_calls': 2, 'tool_calls': 1, 'total_tokens': None, 'known': False}\nforged_citation: TUTOR_INVALID_CITATION\ntool_loop_assertions: passed\n",
+          "stderr": ""
+        }
+      ],
+      "sha256": "6e695f57863c34f64cfce00d02eca3600acfe2ffccc6368bd55fcda2e6778ffc",
+      "toc_link_count": 22,
+      "visual_qa": "all pages in contact sheets + full-size review of code, tables, diagrams and screenshots",
+      "geometry_qa": "passed: text stays inside inspected page bounds",
+      "source_range_qa": "passed"
+    },
+    {
+      "number": 6,
+      "title": "LangGraph 节点、条件边与中断恢复",
+      "file": "study/第06章_LangGraph节点与条件边及中断恢复.pdf",
+      "pages": 14,
+      "figures": 6,
+      "tables": 7,
+      "chars": 19606,
+      "bookmarks": 11,
+      "bytes": 665106,
+      "experiments": [
+        {
+          "name": "reducer_overwrite",
+          "stdout": "empty {'trace': ['start', 'append'], 'count': 1}\nclear {'trace': [], 'count': 1}\n",
+          "stderr": ""
+        },
+        {
+          "name": "review_resume",
+          "stdout": "True accepted ['retrieve', 'draft', 'review']\nFalse rejected ['retrieve', 'draft', 'review']\nmissing: insufficient_evidence ['retrieve', 'missing']\n",
+          "stderr": ""
+        }
+      ],
+      "sha256": "228bd7adbdd7b0ffbb7f0a0d642da30f707e5bc7afabe717caf1c0515b232480",
+      "toc_link_count": 22,
+      "visual_qa": "all pages in contact sheets + full-size review of code, tables, diagrams and screenshots",
+      "geometry_qa": "passed: text stays inside inspected page bounds",
+      "source_range_qa": "passed"
+    },
+    {
+      "number": 7,
+      "title": "业务状态、检查点与幂等恢复",
+      "file": "study/第07章_业务状态与检查点及幂等恢复.pdf",
+      "pages": 18,
+      "figures": 7,
+      "tables": 6,
+      "chars": 34584,
+      "bookmarks": 11,
+      "bytes": 903898,
+      "experiments": [
+        {
+          "name": "ch07_accepted_checkpoint_isolation",
+          "stdout": "same_request_hash: True\nchanged_intent_hash: False\nfirst_status: answered\nlatest_contains_unaccepted: True\nnext_input_contains_unaccepted: False\nnew_turn_evidence_ids: ['fixture:tcp:1']\n",
+          "stderr": "Deserializing unregistered type study_agent.agents.tutor.schemas.TutorAnswerDraft from checkpoint. This will be blocked in a future version. Set LANGGRAPH_STRICT_MSGPACK=true to block now, or add to allowed_msgpack_modules to allow explicitly: [('study_agent.agents.tutor.schemas', 'TutorAnswerDraft')]\n"
+        }
+      ],
+      "sha256": "824575784f2f96aa9589338fd274cef51ffcf9a591e492415b461a280825ef6b",
+      "toc_link_count": 22,
+      "visual_qa": "all pages in contact sheets + full-size review of code, tables, diagrams and screenshots",
+      "geometry_qa": "passed: text stays inside inspected page bounds",
+      "source_range_qa": "passed"
+    },
+    {
+      "number": 8,
+      "title": "自适应学习与评估复盘",
+      "file": "study/第08章_自适应学习与评估复盘.pdf",
+      "pages": 18,
+      "figures": 9,
+      "tables": 6,
+      "chars": 30606,
+      "bookmarks": 12,
+      "bytes": 1427735,
+      "experiments": [
+        {
+          "name": "ch08_learning_rules",
+          "stdout": "1 True 0.405 1 1 2.6\n2 True 0.4943 6 2 2.7\n3 False 0.3954 1 0 2.38\naccuracy = 0.6667\nconfidence = 0.3\n",
+          "stderr": ""
+        },
+        {
+          "name": "ch08_evaluation_metrics",
+          "stdout": "retrieval = {'sample_count': 3, 'hit_at_1': 0.3333, 'hit_at_3': 0.6667, 'hit_at_5': 0.6667, 'recall_at_5': 0.6667, 'mrr': 0.5, 'latency_p50_ms': 20.0, 'latency_p95_ms': 100.0}\naudit = {'question_count': 1, 'schema_valid_rate': 1.0, 'source_traceable_rate': 1.0, 'exact_duplicate_rate': 0.0, 'type_distribution': {'single_choice': 1}, 'status_distribution': {'draft': 1}}\n",
+          "stderr": ""
+        }
+      ],
+      "sha256": "79b595f8c16a9e4d644b6a1e4fe8b5eefca2f3011bee019e80a083a4ff84e617",
+      "toc_link_count": 24,
+      "visual_qa": "all pages in contact sheets + full-size review of code, tables, diagrams and screenshots",
+      "geometry_qa": "passed: text stays inside inspected page bounds",
+      "source_range_qa": "passed"
+    }
+  ],
+  "source_sha256": {
+    "README.md": "ad50322ad26769bfb183fc88e29868fe9b55a43a9ff460a22936143d463c2353",
+    "apps/api/study_agent/agents/tutor/agent.py": "36a738d2ffebb743673038dfc856e4d52c86023a4495f895a5ad77df2b57e8d9",
+    "apps/api/study_agent/agents/tutor/context.py": "cc77fa2ec526a17f11780aa7a99a8e0d97634342cdda7206c3fce33bae416d13",
+    "apps/api/study_agent/agents/tutor/middleware.py": "5f02af31a48d023832175cdf7a1cc824c6d34a2d2dedec963a3319ab19b12377",
+    "apps/api/study_agent/agents/tutor/state.py": "9e987f60a8e665f822bcf8f1d92103c2119ad14cdca8c3a4c5aef07adda9a4f4",
+    "apps/api/study_agent/agents/tutor/tools.py": "dd65814222c32cc389d49a19f4339b5aeb08a5190e70e9519d1268212ff20e94",
+    "apps/api/study_agent/agents/tutor/validation.py": "493f11ec444217ab8cb7b2da4e6d77ed05bf7cf19aab270d5d9c0d116da05c95",
+    "apps/api/study_agent/api/router.py": "d1429913f19c43b08daaea98f0ec2301577841b7f3b4fc08842dfbe3f40df8b8",
+    "apps/api/study_agent/application/adaptive_selection.py": "692fd8f06cfe0b76ca3d571840d220ff9f9a862fd21af6c0b0ef8efe95c63333",
+    "apps/api/study_agent/application/questions.py": "5d2e12d6c5683f4dbc8bec582cd4bbfd9ba75006ebe8960c5cccc88dc3a8f21f",
+    "apps/api/study_agent/application/retrieval.py": "d55d44236f5ac84e88eaa9b2032362bc761c14cf0ab7c09df069acbb30a1df8e",
+    "apps/api/study_agent/application/study.py": "9207bcdf0074531c413f802242e12313be4e61be0c03827a0017fdbd263a2d9e",
+    "apps/api/study_agent/application/study_explanations.py": "ace2bb0e8f62226d5ed9a886611a259da61faa8d145b15be204b3acb572d85ca",
+    "apps/api/study_agent/application/tutoring.py": "95fb6d223719c332f3044afb899d4219fdaa8628a5e5af760aa6d0e89794b402",
+    "apps/api/study_agent/config.py": "fb8cebb316e17bd863aa0821c7f88e087e6b937ce3053e0052a2a142400b3c43",
+    "apps/api/study_agent/domain/models.py": "e2bf36dc3e1b8d87d31a9a6f87bd2249ca3c5d597cae86d672ad5cb07baf18a6",
+    "apps/api/study_agent/domain/ports.py": "c34ce17382ea79ab7399dfcb02fab3e5208d0ea250f5c7dd499d53855ab3b216",
+    "apps/api/study_agent/evaluation/metrics.py": "1550c28a5e9b206f618fc1ad985794db26a0a5bc3d49afb9394f1f73d3566e5b",
+    "apps/api/study_agent/infrastructure/checkpointer.py": "192f69563765ef4c202d5c36ee0a83d2c3948a9c891c3a4cb56bbb441a102696",
+    "apps/api/study_agent/infrastructure/study_state.py": "b289f17fa554339cc24d7ad63d3415e7e666045454cf3e9ec0e34301a0323023",
+    "apps/api/study_agent/infrastructure/tutoring.py": "2149692bf9d2826aefe0f800e3b67c0fbccddb5b6116437ba2b205aa66509072",
+    "apps/api/study_agent/infrastructure/tutoring_models.py": "5e43780dc17c0f09995162d40004f4a3224b79a5513c40a457f0cb5ca0fe1aef",
+    "apps/api/study_agent/ingestion/chunking.py": "5d53d0fb2ceccc6a41172eff0797dba230d30bd4f7e22067c8e94fdf0f5620b7",
+    "apps/api/study_agent/ingestion/dispatcher.py": "8814091231da708075013cfd127d8760fc32e8813ae0268b58e296fcccf88e90",
+    "apps/api/study_agent/ingestion/embeddings.py": "70efe38b572f91f4622660ae1e394f9a22cc57752e336b05f0056b4df7367c7a",
+    "apps/api/study_agent/ingestion/parsers.py": "f7ea0ef3236b5743d1dbec5cce9142962a5968063889dc779aaa55db67e36eb3",
+    "apps/api/study_agent/ingestion/tasks.py": "8cd43afcdae567260dcd3c51936ad3629cbac61909e956db234bdc6338ea9678",
+    "apps/api/study_agent/ingestion/vector_index.py": "57b4c62ebf6660b0408da6b0b119f44277b7426a8df74820b6b707a6377dc404",
+    "apps/api/study_agent/main.py": "d184fb20168ef504b13521bda1f3505ddb71943c4f4382816b399b915117dfac",
+    "apps/api/study_agent/question_generation/chains.py": "ef4e2f6f5be7f5a996322fca58b97d34fdbe90ff489e2387cdd31e8c1663f8d1",
+    "apps/api/study_agent/question_generation/quality.py": "052028c2ce204f142c86dcf2cc15eeb8ef9edffd25bb951f0474efbb947999d1",
+    "apps/api/study_agent/question_generation/schemas.py": "e814812dcab8a48f1553d8a638830cef08f6166470de25e3af027da50335c26e",
+    "apps/api/study_agent/question_generation/tasks.py": "07726ccc468dfa6755f524a60862d83768e495ba4c9bad9818b1d2a91b64eee6",
+    "apps/api/study_agent/question_generation/vector_index.py": "75cc57420f463a21e9387545c06fd62f9244f04b62b49db2653aaa42cea9e493",
+    "apps/api/tests/test_adaptive_learning.py": "f81ea42aa8e5e3d9c1146e4ea13becb962f95e50c2f04940a3ef8d2df6867555",
+    "apps/api/tests/test_question_generation.py": "f2392f5bd766d2f69bdfc9fb0c26f4238bad1f124c47aeb0e9b52c81a494d0fd",
+    "apps/api/tests/test_study_grading.py": "9b56e406efc212980319bcaf4638189623a617c927adfceef1290b45054033dc",
+    "apps/api/tests/test_tutor_acceptance.py": "095922ac9e6c0e4eb44d26b7744835c824c0b8fefeb137754ad305d23df8faf1",
+    "apps/api/tests/test_tutor_postgres_acceptance.py": "66d5557011a215151e59b87b469e357fc267c40124335d216230e6be4db636bd",
+    "docs/技术方案/学习准备与章节计划.md": "184b378f35d704566c590cb5cd74aed11af04a77c589efcde6a2d68a51559f4d",
+    "evaluation/results/2026-09-28-P8题库审计-59道.json": "9d76dcfdf3859887bec46c176f753a60087cbaa3c8ab483dae0639eeef732849",
+    "evaluation/results/2026-09-28-TCP检索评测-text-embedding-v4-30条.json": "fbb32666d8dc4b6646083414dff96decb11a77fa9a2379064de232e73b4d6480",
+    "evaluation/results/2026-10-07-学习准备验证.json": "56df62537c23229f73ad90cea7649aea7c6448dc8596c5e96fa056d98efb5e12",
+    "examples/learning/agent_tool_loop.py": "12a1f079ec07364e61c90fbbc5f2e52828e3a424882254504f04a70c6b7db600",
+    "examples/learning/langgraph_review.py": "b870c0bad47febb61a1ecec0529b7e0e5210dab3c5a61f82ebf244f922bb9ae6",
+    "examples/learning/rag_context.py": "fdb110127bcc534db9a72a80a693d214ed93e010468d45d3f047214c095b32c3"
+  },
+  "screenshot_provenance": {
+    "generation-settings": {
+      "source": "当前真实项目页面 / 现有业务数据 / 2026-10-07",
+      "caption": "题型和目标题数配置；只打开界面，未提交生成"
+    },
+    "home": {
+      "source": "当前真实项目页面 / 现有业务数据 / 2026-10-07",
+      "caption": "学习概览：资料、题库、练习与复习入口"
+    },
+    "knowledge-bases": {
+      "source": "当前真实项目页面 / 现有业务数据 / 2026-10-07",
+      "caption": "知识库范围与上传入口；资料处理状态在下一幅真实卡片中展开"
+    },
+    "material-detail": {
+      "source": "当前真实项目页面 / 现有业务数据 / 2026-10-07",
+      "caption": "材料已就绪与生成目标10/通过9/拒绝1的实际记录"
+    },
+    "progress": {
+      "source": "当前真实项目页面 / 现有业务数据 / 2026-10-07",
+      "caption": "当前业务记录的掌握度与复习计划，不是模型质量评测"
+    },
+    "question-detail": {
+      "source": "当前真实项目页面 / 现有业务数据 / 2026-10-07",
+      "caption": "题目、标准答案、解析与原文引文的真实审核界面"
+    },
+    "questions": {
+      "source": "当前真实项目页面 / 现有业务数据 / 2026-10-07",
+      "caption": "题库审核状态及原文引用数量"
+    },
+    "rejected-detail": {
+      "source": "当前真实项目页面 / 现有业务数据 / 2026-10-07",
+      "caption": "历史候选正文未保存；展示已记录的拒绝汇总与原因"
+    },
+    "study-answer": {
+      "source": "真实 Vue 页面 / 隔离 HTTP fixture 教学数据 / 2026-10-07",
+      "caption": "真实答后反馈界面，固定 TCP 教学数据模拟一次错误选择，展示确定性判分、理解差距、原文证据与继续请教入口；没有真实模型调用。"
+    },
+    "study-start": {
+      "source": "当前真实项目页面 / 现有业务数据 / 2026-10-07",
+      "caption": "四种学习模式及范围配置，未新建会话"
+    },
+    "tutor-history": {
+      "source": "当前真实项目页面 / 现有业务数据 / 2026-10-07",
+      "caption": "只读打开既有辅导会话，展示历史与输入区"
+    },
+    "tutor-materials": {
+      "source": "当前真实项目页面 / 现有业务数据 / 2026-10-07",
+      "caption": "既有辅导回复的原文依据展开；未发送新问题"
+    },
+    "tutor-mistakes": {
+      "source": "真实 Vue 页面 / 隔离 HTTP fixture 教学数据 / 2026-10-07",
+      "caption": "真实近期错题辅导回答区，隔离 fixture 展示 TCP 错题解释和展开的资料引用；强调单次作答不能确定具体错因，未调用真实 Agent 或模型。"
+    }
+  },
+  "external_model_calls_this_task": 0,
+  "screenshot_real_business_writes": 0,
+  "fixture_capture_note": "11 isolated browser HTTP fixture responses; actual Vue frontend; no real API writes or model calls",
+  "limits": [
+    "Historical provider acceptance is a two-question fixed TCP sample, not a broad quality score.",
+    "LangGraph human-review flow is an independent InMemorySaver teaching example, not a product feature.",
+    "Chapter 07 experiment passed; current saver warns about future allow-list handling for TutorAnswerDraft."
+  ]
+}
