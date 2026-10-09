@@ -6,6 +6,7 @@ from study_agent.config import get_settings
 from study_agent.ingestion.tasks import finish_ingestion, index_material, parse_material
 
 
+# 把资料处理步骤串成 Celery 任务链，让上传接口不用等待解析完成。
 class CeleryIngestionDispatcher:
     def dispatch(self, *, job_id: UUID, material_id: UUID) -> None:
         workflow = chain(

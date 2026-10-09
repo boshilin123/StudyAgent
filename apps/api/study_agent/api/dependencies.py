@@ -26,6 +26,7 @@ from study_agent.question_generation.dispatcher import CeleryQuestionGenerationD
 from study_agent.question_generation.factory import get_question_index as create_question_index
 
 
+# 给路由注入业务事务对象，测试时可以替换为内存实现。
 async def get_uow(
     session: Annotated[AsyncSession, Depends(get_session)],
 ) -> AsyncIterator[SqlAlchemyUnitOfWork]:

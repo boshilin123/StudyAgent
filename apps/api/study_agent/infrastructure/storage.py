@@ -9,6 +9,7 @@ from minio import Minio
 from study_agent.domain.models import StoredObject
 
 
+# 开发时把原始资料保存到本地目录，并检查路径不能越出存储根目录。
 class LocalObjectStorage:
     def __init__(self, root: Path) -> None:
         self.root = root.resolve()
@@ -55,6 +56,7 @@ class LocalObjectStorage:
         return await anyio.to_thread.run_sync(target.read_bytes)
 
 
+# 使用 S3 兼容服务保存原始资料，数据库只保留对象位置等信息。
 class MinioObjectStorage:
     def __init__(
         self,

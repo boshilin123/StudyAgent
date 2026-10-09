@@ -402,7 +402,7 @@ onUnmounted(() => window.clearInterval(refreshTimer))
       <el-form-item label="题型"><el-checkbox-group v-model="generationForm.types"><el-checkbox value="single_choice">单选题</el-checkbox><el-checkbox value="fill_blank">填空题</el-checkbox><el-checkbox value="true_false">判断题</el-checkbox></el-checkbox-group></el-form-item>
       <el-form-item label="难度范围"><el-slider v-model="generationForm.difficulty" range :min="1" :max="5" :step="1" show-stops /></el-form-item>
     </el-form>
-    <p class="muted-text">可设置 1–100 道。仅保存通过质量和原文引用校验的题目；实际数量可能不足目标，同一知识库中的重复题会复用。</p>
+    <p class="muted-text">可设置 1–100 道。系统按资料片段出题并绑定参考原文，通过基础校验后保存为待审核草稿；不足时最多补充一轮。实际数量可能不足目标，同一知识库中的重复题会复用。</p>
     <template #footer><el-button @click="generationVisible = false">取消</el-button><el-button type="primary" :loading="!!generationMaterial && generatingIds.has(generationMaterial.id)" @click="generateQuestions">提交生成</el-button></template>
   </el-dialog>
 
@@ -417,13 +417,13 @@ onUnmounted(() => window.clearInterval(refreshTimer))
           <p v-for="option in item.question.options || []" :key="option.key">{{ option.key }}. {{ option.text }}</p>
           <p>候选答案：{{ item.question.correct_answers.join('、') }}</p>
           <p>候选解析：{{ item.question.explanation }}</p>
-          <p>来源片段 {{ item.question.source_chunk_ids.length }} 个 · 引文 {{ item.question.source_quotes.length }} 条</p>
-          <blockquote v-for="(quote, quoteIndex) in item.question.source_quotes" :key="quoteIndex">候选引文 {{ quoteIndex + 1 }}：{{ quote }}</blockquote>
-          <small>以上内容由模型生成，未通过校验，不能视为可靠答案或原文引用。</small>
+          <p>来源片段 {{ item.question.source_chunk_ids?.length || 0 }} 个 · {{ item.question.source_kind === 'reference_context' ? '出题参考原文' : '引文' }} {{ item.question.source_quotes?.length || 0 }} 条</p>
+          <blockquote v-for="(quote, quoteIndex) in item.question.source_quotes" :key="quoteIndex">{{ item.question.source_kind === 'reference_context' ? '参考原文' : '候选引文' }} {{ quoteIndex + 1 }}：{{ quote }}</blockquote>
+          <small>{{ item.question.source_kind === 'reference_context' ? '题目内容未通过基础校验，不能用于练习；参考原文由系统绑定，不代表答案已经审核。' : '以上内容由模型生成，未通过校验，不能视为可靠答案或原文引用。' }}</small>
         </section>
       </template>
       <template v-else>
-        <el-alert title="这次生成发生在详情保存功能上线前，候选题内容未被保存，无法补回。后续生成会保存题干、答案、引文和拒绝原因。" type="info" :closable="false" />
+        <el-alert title="这次生成发生在详情保存功能上线前，候选题内容未被保存，无法补回。后续生成会保存候选题、参考原文和拒绝原因。" type="info" :closable="false" />
         <p v-if="rejectedJob.error_message">当时记录：{{ rejectedJob.error_message }}</p>
         <p v-else>当时仅记录了拒绝 {{ rejectedJob.rejected_count }} 道，未保存具体原因。</p>
       </template>

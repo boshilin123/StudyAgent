@@ -12,6 +12,7 @@ from study_agent.domain.ports import DocumentIndex
 from study_agent.infrastructure.models import DocumentChunkModel, MaterialModel
 
 
+# 将数据库中的原文和页码组装成证据，模型不能自行决定这些来源字段。
 def evidence_from_rows(
     chunk: DocumentChunkModel, material: MaterialModel, quote: str | None = None
 ) -> dict[str, Any]:
@@ -29,6 +30,7 @@ def evidence_from_rows(
     }
 
 
+# 先从向量库找候选，再到 PostgreSQL 核对原文是否仍存在且属于当前知识库。
 class LearningMaterialRetrieval:
     def __init__(
         self,
@@ -62,6 +64,7 @@ class LearningMaterialRetrieval:
             if hit.chunk_id in current and current[hit.chunk_id][1].id == hit.material_id
         ]
 
+    # 输出前再次核对内容指纹和引文，避免引用已经变更或删除的资料。
     async def revalidate(self, knowledge_base_id: UUID, evidence: dict[str, Any]) -> bool:
         async with self.sessions() as session:
             row = (

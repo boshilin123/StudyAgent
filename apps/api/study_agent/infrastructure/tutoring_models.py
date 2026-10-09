@@ -32,6 +32,7 @@ class TutorConversationModel(Base):
     )
 
 
+# 记录一轮辅导执行和请求指纹，失败或重复请求都能查回状态。
 class TutorTurnModel(Base):
     __tablename__ = "tutor_turns"
     __table_args__ = (

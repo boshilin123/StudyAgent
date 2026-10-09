@@ -19,6 +19,7 @@ configure_logging(settings.log_level)
 logger = structlog.get_logger(__name__)
 
 
+# 应用启动时打开辅导检查点连接，关闭时释放资源。
 @asynccontextmanager
 async def lifespan(app: FastAPI) -> AsyncIterator[None]:
     logger.info("application_started", environment=settings.app_env)
@@ -27,6 +28,7 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
     logger.info("application_stopped")
 
 
+# 组装路由、访问令牌校验和请求日志，是 FastAPI 的总入口。
 def create_app() -> FastAPI:
     app = FastAPI(
         title=settings.app_name,

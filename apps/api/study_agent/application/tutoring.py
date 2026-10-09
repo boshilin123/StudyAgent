@@ -38,6 +38,7 @@ from study_agent.infrastructure.tutoring_models import (
 from study_agent.llm.provider_errors import tutoring_request_rejection
 
 
+# 给辅导请求生成指纹，识别重试并防止同一请求 ID 被用于不同内容。
 def request_digest(content: str, intent: str) -> str:
     return hashlib.sha256(
         json.dumps(
@@ -64,6 +65,7 @@ def effective_intent(content: str, supplied: str, anchored: bool) -> str:
     return supplied
 
 
+# 管理辅导会话、执行 Agent、保存回复，并统一处理超时与失败恢复。
 class TutorService:
     def __init__(
         self,
@@ -253,6 +255,7 @@ class TutorService:
             [*budget.trace, {"kind": "recovery", "validated": False}],
         )
 
+    # 预留本轮请求后执行辅导；结束时检查引用并保存结果，供重试复用。
     async def submit(self, conversation_id: UUID, payload: SubmitTutorMessage) -> dict[str, Any]:
         self.available()
         conversation = await self.repository.conversation(conversation_id)

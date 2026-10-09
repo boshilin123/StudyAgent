@@ -87,9 +87,7 @@ def test_tutor_config_cannot_change_generation_model() -> None:
 
 @pytest.mark.parametrize("purpose", ["question_generation", "tutoring"])
 def test_provider_extension_can_be_disabled(purpose: Any) -> None:
-    model = get_chat_model(
-        configured_settings(llm_send_enable_thinking=False), purpose=purpose
-    )
+    model = get_chat_model(configured_settings(llm_send_enable_thinking=False), purpose=purpose)
     assert isinstance(model, ChatOpenAI)
     assert model.extra_body is None
 
@@ -103,9 +101,7 @@ def test_tutor_provider_extension_override() -> None:
 
 
 def test_tutor_disables_sdk_retries_and_caps_output() -> None:
-    model = get_chat_model(
-        configured_settings(tutor_llm_max_output_tokens=900), purpose="tutoring"
-    )
+    model = get_chat_model(configured_settings(tutor_llm_max_output_tokens=900), purpose="tutoring")
     assert isinstance(model, ChatOpenAI)
     assert model.max_retries == 0
     assert model.max_tokens == 900
@@ -178,7 +174,6 @@ async def test_generation_lcel_parsers_on_v1(monkeypatch: pytest.MonkeyPatch) ->
         "description": "TCP 使用三次握手建立连接",
         "importance": 0.9,
         "difficulty": 2,
-        "source_chunk_ids": [chunk_id],
     }
     question = {
         "knowledge_point_key": "tcp-handshake",
@@ -187,8 +182,6 @@ async def test_generation_lcel_parsers_on_v1(monkeypatch: pytest.MonkeyPatch) ->
         "correct_answers": ["正确"],
         "explanation": "原文说明 TCP 使用三次握手建立连接。",
         "difficulty": 2,
-        "source_chunk_ids": [chunk_id],
-        "source_quotes": ["TCP 通过三次握手建立连接"],
     }
     fake = FakeListChatModel(
         responses=[json.dumps({"items": [point]}), json.dumps({"items": [question]})]
@@ -212,6 +205,7 @@ async def test_generation_lcel_parsers_on_v1(monkeypatch: pytest.MonkeyPatch) ->
     assert isinstance(points, KnowledgePointBatch)
     assert isinstance(questions, QuestionBatch)
     assert questions.items[0].correct_answers == ["正确"]
+    assert "source_chunk_ids" not in questions.items[0].model_dump()
 
 
 @pytest.mark.asyncio

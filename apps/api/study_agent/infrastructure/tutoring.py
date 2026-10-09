@@ -16,6 +16,7 @@ from study_agent.infrastructure.tutoring_models import (
 )
 
 
+# 保存辅导会话、轮次和消息，处理请求幂等及执行状态。
 class TutorRepository:
     def __init__(
         self, session_factory: async_sessionmaker[AsyncSession], engine: AsyncEngine
@@ -23,6 +24,7 @@ class TutorRepository:
         self.sessions = session_factory
         self.engine = engine
 
+    # 同一个辅导会话一次只执行一个请求，避免消息顺序和检查点互相覆盖。
     @asynccontextmanager
     async def execution_lock(self, conversation_id: UUID) -> AsyncIterator[bool]:
         key = int.from_bytes(conversation_id.bytes[:8], "big", signed=True)

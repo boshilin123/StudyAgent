@@ -55,6 +55,11 @@ export interface QuestionSource {
   chunk_id: string
   quote: string
   rank: number
+  source_kind: 'quote' | 'reference_context'
+  material_title: string | null
+  page_start: number | null
+  page_end: number | null
+  heading_path: string[]
 }
 
 export interface Question {
@@ -95,6 +100,7 @@ export interface QuestionGenerationJob extends Job {
       difficulty: number
       source_chunk_ids: string[]
       source_quotes: string[]
+      source_kind?: 'reference_context'
     }
   }>
 }
@@ -160,6 +166,10 @@ export interface ExplanationEvidence {
   chunk_id: string
   quote: string
   rank: number
+  source_kind?: 'quote' | 'reference_context'
+  material_title?: string | null
+  page_start?: number | null
+  page_end?: number | null
 }
 
 export interface RagExplanation {

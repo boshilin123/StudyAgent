@@ -4,6 +4,7 @@ import sys
 import structlog
 
 
+# 统一日志格式，方便按请求或任务定位问题。
 def configure_logging(level: str) -> None:
     logging.basicConfig(
         format="%(message)s",

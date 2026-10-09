@@ -67,6 +67,7 @@ class StoredObject:
     object_name: str
 
 
+# 一段解析后的原文，保留资料归属、页码和标题，供出题及检索使用。
 @dataclass(slots=True)
 class DocumentChunk:
     id: UUID
@@ -94,6 +95,7 @@ class SearchHit:
     heading_path: list[str] = field(default_factory=list)
 
 
+# 保存出题任务的阶段、目标数量和结果，前端据此显示进度。
 @dataclass(slots=True)
 class QuestionGenerationJob:
     id: UUID
@@ -116,13 +118,20 @@ class QuestionGenerationJob:
     created_at: datetime | None = None
 
 
+# 记录题目的来源；区分旧的逐字引文与后端绑定的出题上下文。
 @dataclass(slots=True)
 class QuestionSource:
     chunk_id: UUID
     quote: str
     rank: int
+    source_kind: str = "quote"
+    material_title: str | None = None
+    page_start: int | None = None
+    page_end: int | None = None
+    heading_path: list[str] = field(default_factory=list)
 
 
+# 题目的业务数据，包含答案、解析、状态和来源；草稿审核后才能练习。
 @dataclass(slots=True)
 class Question:
     id: UUID
@@ -144,6 +153,7 @@ class Question:
     updated_at: datetime | None = None
 
 
+# 一轮学习的总账，记录模式、已答数量和累计得分。
 @dataclass(slots=True)
 class StudySession:
     id: UUID
@@ -189,6 +199,7 @@ class AnswerRecord:
     explanation_data: dict[str, object] | None = None
 
 
+# 按知识点记录掌握度及答题统计，不是模型自动评出的能力等级。
 @dataclass(slots=True)
 class MasteryRecord:
     knowledge_point_id: UUID
@@ -201,6 +212,7 @@ class MasteryRecord:
     updated_at: datetime
 
 
+# 记录一个知识点下次何时复习，以及用于计算间隔的参数。
 @dataclass(slots=True)
 class ReviewTask:
     id: UUID

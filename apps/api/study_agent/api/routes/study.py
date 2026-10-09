@@ -29,6 +29,7 @@ review_router = APIRouter()
 service = StudyService()
 
 
+# 把内部题目转换成学习题面，只保留当前允许显示的字段。
 def _public_question(
     question: Question | None,
     sequence: int,
@@ -125,6 +126,7 @@ async def get_session(
     return _view_response(await service.get_session(uow, session_id, state_store))
 
 
+# 接收答案和提交 ID，调用学习业务并返回判分、讲解及下一题。
 @router.post("/sessions/{session_id}/answers", response_model=AnswerResultResponse)
 async def submit_answer(
     session_id: UUID,

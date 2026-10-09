@@ -126,6 +126,7 @@ def _default_question_types() -> list[QuestionType]:
     return ["single_choice", "fill_blank", "true_false"]
 
 
+# 定义用户能设置的出题参数，限制目标数量、题型和难度范围。
 class QuestionGenerationCreate(BaseModel):
     target_question_count: int = Field(default=10, ge=1, le=100)
     allowed_types: list[QuestionType] = Field(
@@ -160,12 +161,18 @@ class QuestionGenerationJobResponse(BaseModel):
     created_at: datetime | None
 
 
+# 返回来源类型、参考文本和位置，让前端区分上下文与旧引文。
 class QuestionSourceResponse(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
     chunk_id: UUID
     quote: str
     rank: int
+    source_kind: Literal["quote", "reference_context"] = "quote"
+    material_title: str | None = None
+    page_start: int | None = None
+    page_end: int | None = None
+    heading_path: list[str] = Field(default_factory=list)
 
 
 class QuestionResponse(BaseModel):
@@ -212,6 +219,7 @@ class StudySessionCreate(BaseModel):
     difficulty_max: int = Field(default=5, ge=1, le=5)
 
 
+# 学习过程只返回题面，防止未作答题的标准答案提前暴露。
 class PublicQuestionResponse(BaseModel):
     id: UUID
     sequence: int

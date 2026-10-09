@@ -7,15 +7,18 @@ from langchain_text_splitters import RecursiveCharacterTextSplitter
 
 from study_agent.domain.models import DocumentChunk
 
+# 固定命名空间让相同资料、位置和内容产生相同片段 ID，重新解析时便于去重。
 CHUNK_NAMESPACE = UUID("0cd60cd7-c523-4710-9948-33037ca94a86")
 
 
+# 按英文词和汉字粗略估算长度，用于统计，不等于模型真实计费 token 数。
 def _estimate_tokens(text: str) -> int:
     latin_tokens = len(re.findall(r"[A-Za-z0-9_]+", text))
     cjk_characters = len(re.findall(r"[\u3400-\u9fff]", text))
     return max(1, latin_tokens + cjk_characters)
 
 
+# 把长文拆成有重叠的小段，并生成稳定 ID；保留原有页码与章节信息。
 def build_chunks(
     documents: list[Document],
     *,

@@ -3,6 +3,7 @@
 from openai import BadRequestError
 
 
+# 识别供应商拒绝请求的原因，转换成可理解的辅导错误提示。
 def tutoring_request_rejection(error: BadRequestError) -> tuple[str, str]:
     body = error.body
     message = ""

@@ -16,6 +16,23 @@ class ExplanationDraft(BaseModel):
     gap: str = Field(min_length=2, max_length=1000)
 
 
+def _source_evidence(question: Question) -> list[dict[str, object]]:
+    """将题目来源及位置传给讲解页面，保留上下文与旧引文的区别。"""
+    return [
+        {
+            "chunk_id": str(source.chunk_id),
+            "quote": source.quote,
+            "rank": source.rank,
+            "source_kind": source.source_kind,
+            "material_title": source.material_title,
+            "page_start": source.page_start,
+            "page_end": source.page_end,
+        }
+        for source in question.sources
+    ]
+
+
+# 模型未配置或调用失败时，使用题库已有解析，保证答题反馈仍可返回。
 def fallback_explanation(
     *, question: Question, correct: bool, status: str = "fallback"
 ) -> dict[str, object]:
@@ -24,17 +41,11 @@ def fallback_explanation(
         "status": status,
         "conclusion": "回答正确。" if correct else "本题回答不正确。",
         "gap": question.explanation,
-        "evidence": [
-            {
-                "chunk_id": str(source.chunk_id),
-                "quote": source.quote,
-                "rank": source.rank,
-            }
-            for source in question.sources
-        ],
+        "evidence": _source_evidence(question),
     }
 
 
+# 按题目、答案和参考原文生成错因讲解；讲解不会改变确定性判分结果。
 class LangChainStudyExplanationGenerator:
     def __init__(self, settings: Settings) -> None:
         self.settings = settings
@@ -53,7 +64,7 @@ class LangChainStudyExplanationGenerator:
             [
                 (
                     "system",
-                    "你是严谨的个人学习讲解助手。只能依据题目、标准答案、已有解析和真实原文证据解释错误。"
+                    "你是严谨的个人学习讲解助手。只能依据题目、标准答案、已有解析和出题参考原文解释错误。"
                     "不要虚构资料、页码或引用 ID。"
                     "用简洁中文给出结论和用户答案与正确答案之间的差距。",
                 ),
@@ -61,7 +72,7 @@ class LangChainStudyExplanationGenerator:
                     "human",
                     "题目：{stem}\n题型：{question_type}\n用户答案：{user_answer}\n"
                     "标准答案：{correct_answer}\n已有解析：{base_explanation}\n"
-                    "原文证据：\n{evidence}\n\n输出要求：\n{format_instructions}",
+                    "出题参考原文：\n{evidence}\n\n输出要求：\n{format_instructions}",
                 ),
             ]
         ).partial(format_instructions=parser.get_format_instructions())
@@ -78,10 +89,7 @@ class LangChainStudyExplanationGenerator:
                 correct=correct,
                 status="question_bank" if correct else "fallback_not_configured",
             )
-        evidence = [
-            {"chunk_id": str(source.chunk_id), "quote": source.quote, "rank": source.rank}
-            for source in question.sources
-        ]
+        evidence = _source_evidence(question)
         try:
             draft = await self.chain.ainvoke(
                 {

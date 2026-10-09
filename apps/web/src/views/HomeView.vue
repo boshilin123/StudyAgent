@@ -106,7 +106,7 @@ onMounted(loadDashboard)
 
         <h2>下一步做什么？</h2>
         <RouterLink to="/knowledge-bases"><b>01</b><span>上传或管理学习资料</span></RouterLink>
-        <RouterLink to="/questions"><b>02</b><span>审核题目与原文引用</span></RouterLink>
+        <RouterLink to="/questions"><b>02</b><span>审核题目与参考原文</span></RouterLink>
         <RouterLink to="/study"><b>03</b><span>开始诊断、练习或复习</span></RouterLink>
       </article>
     </section>

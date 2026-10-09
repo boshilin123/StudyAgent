@@ -173,7 +173,7 @@ onMounted(async () => {
           <span v-for="option in question.options" :key="option.key"><b>{{ option.key }}</b>{{ option.text }}</span>
         </div>
         <div class="question-footer">
-          <span>{{ question.sources.length }} 条原文引用</span>
+          <span>{{ question.sources.length }} 个参考片段</span>
           <div class="row-inline" @click.stop>
             <el-button text :icon="EditPen" @click="openEdit(question)">编辑</el-button>
             <el-button
@@ -204,8 +204,17 @@ onMounted(async () => {
       <section class="detail-block answer-block"><label>标准答案</label><p>{{ answerText(detail.correct_answer) }}</p></section>
       <section class="detail-block"><label>解析</label><p>{{ detail.explanation }}</p></section>
       <section class="detail-block">
-        <label>原文证据</label>
-        <blockquote v-for="source in detail.sources" :key="source.chunk_id">{{ source.quote }}<small>chunk {{ source.chunk_id.slice(0, 8) }}</small></blockquote>
+        <label>出题参考原文</label>
+        <p class="muted-text">请结合参考原文核对答案与解析，审核后再启用。</p>
+        <details v-for="source in detail.sources" :key="source.chunk_id" class="reference-context">
+          <summary>
+            {{ source.material_title || '学习资料' }}
+            <span v-if="source.page_start"> · 第 {{ source.page_start }}<template v-if="source.page_end && source.page_end !== source.page_start">–{{ source.page_end }}</template> 页</span>
+            · {{ source.source_kind === 'reference_context' ? '出题上下文' : '原文引文' }}
+          </summary>
+          <small v-if="source.heading_path?.length">{{ source.heading_path.join(' / ') }}</small>
+          <blockquote>{{ source.quote }}</blockquote>
+        </details>
       </section>
       <div class="drawer-actions">
         <el-button :icon="EditPen" @click="openEdit(detail)">编辑题目</el-button>
@@ -225,3 +234,10 @@ onMounted(async () => {
     <template #footer><el-button @click="editVisible = false">取消</el-button><el-button type="primary" :loading="saving" @click="saveEdit">保存</el-button></template>
   </el-dialog>
 </template>
+
+<style scoped>
+.reference-context { margin-top: 12px; }
+.reference-context summary { cursor: pointer; color: #254f3e; line-height: 1.6; }
+.reference-context > small { display: block; margin-top: 6px; color: #74867c; }
+.reference-context blockquote { white-space: pre-wrap; overflow-wrap: anywhere; }
+</style>

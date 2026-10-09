@@ -2,12 +2,13 @@ import re
 from dataclasses import dataclass
 
 from study_agent.domain.models import DocumentChunk
-from study_agent.question_generation.schemas import GeneratedQuestionDraft, KnowledgePointDraft
+from study_agent.question_generation.schemas import KnowledgePointDraft, SourcedQuestionDraft
 
 
+# 保留基础校验未通过的候选题和原因，不让它进入练习题库。
 @dataclass(slots=True)
 class RejectedQuestion:
-    question: GeneratedQuestionDraft
+    question: SourcedQuestionDraft
     reason: str
 
 
@@ -15,20 +16,23 @@ def _normalize(value: str) -> str:
     return re.sub(r"\s+", "", value).lower()
 
 
+# 检查题型、难度、知识点和重复内容；引用已由后端管理，这里不再逐字匹配引文。
 def validate_question_drafts(
     *,
     knowledge_points: list[KnowledgePointDraft],
-    questions: list[GeneratedQuestionDraft],
+    questions: list[SourcedQuestionDraft],
     chunks: list[DocumentChunk],
     allowed_types: set[str],
     difficulty_min: int,
     difficulty_max: int,
-) -> tuple[list[GeneratedQuestionDraft], list[RejectedQuestion]]:
+    seen_stems: set[str] | None = None,
+) -> tuple[list[SourcedQuestionDraft], list[RejectedQuestion]]:
     chunk_map = {chunk.id: chunk for chunk in chunks}
     point_keys = {point.canonical_key for point in knowledge_points}
-    accepted: list[GeneratedQuestionDraft] = []
+    accepted: list[SourcedQuestionDraft] = []
     rejected: list[RejectedQuestion] = []
-    seen_stems: set[str] = set()
+    if seen_stems is None:
+        seen_stems = set()
 
     for question in questions:
         reason: str | None = None
@@ -40,16 +44,6 @@ def validate_question_drafts(
             reason = "难度超出请求范围"
         elif any(chunk_id not in chunk_map for chunk_id in question.source_chunk_ids):
             reason = "引用了不存在的片段"
-        elif len(question.source_chunk_ids) != len(question.source_quotes):
-            reason = "片段与引文数量不一致"
-        else:
-            for chunk_id, quote in zip(
-                question.source_chunk_ids, question.source_quotes, strict=True
-            ):
-                if _normalize(quote) not in _normalize(chunk_map[chunk_id].content):
-                    reason = "引文无法在原文片段中匹配"
-                    break
-
         normalized_stem = _normalize(question.stem)
         if reason is None and normalized_stem in seen_stems:
             reason = "同批次题干重复"

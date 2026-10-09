@@ -63,6 +63,7 @@ async def _mark_failed(job_id: UUID, material_id: UUID, message: str) -> None:
     await _with_session(operation)
 
 
+# 后台解析任务失败时有限重试，并把最终失败写回任务状态。
 class IngestionTask(Task):
     autoretry_for = (Exception,)
     retry_backoff = True
@@ -82,6 +83,7 @@ class IngestionTask(Task):
         super().on_failure(exc, task_id, args, kwargs, einfo)
 
 
+# 读取资料、解析和分块，将原文片段保存到数据库。
 @celery_app.task(base=IngestionTask, name="study_agent.parse_material")
 def parse_material(job_id: str, material_id: str) -> dict[str, str]:
     async def operation(session: Any) -> dict[str, str]:
@@ -168,6 +170,7 @@ def parse_material(job_id: str, material_id: str) -> dict[str, str]:
     return asyncio.run(_with_session(operation))
 
 
+# 为原文片段生成向量并写入 Milvus，让后续可以按语义检索。
 @celery_app.task(base=IngestionTask, name="study_agent.index_material")
 def index_material(payload: dict[str, str]) -> dict[str, str]:
     async def operation(session: Any) -> dict[str, str]:
@@ -223,6 +226,7 @@ def index_material(payload: dict[str, str]) -> dict[str, str]:
     return asyncio.run(_with_session(operation))
 
 
+# 前面的处理成功后，把资料和任务标记为已就绪。
 @celery_app.task(base=IngestionTask, name="study_agent.finish_ingestion")
 def finish_ingestion(payload: dict[str, str]) -> dict[str, str]:
     async def operation(session: Any) -> dict[str, str]:

@@ -106,6 +106,7 @@ async def _inspect_upload(file: UploadFile, title: str | None) -> UploadPayload:
     )
 
 
+# 接收上传文件，保存资料并启动异步解析，而不是在 HTTP 请求中等待模型。
 @knowledge_base_router.post(
     "/{knowledge_base_id}/materials",
     response_model=MaterialUploadResponse,

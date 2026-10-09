@@ -19,6 +19,7 @@ function Reset-StartupState {
     $global:StudyStartupTestState = @{
         Commands = @(); Browsers = @(); Requests = @(); Copies = 0
         MissingEnvironment = $false; FailStartup = $false; FailReadiness = $false
+        FailMigration = $false; FailUpdate = $false; FailDependencies = $false; FailBuild = $false
     }
 }
 
@@ -49,6 +50,22 @@ function docker {
     }
     if (($args -contains 'up') -and $global:StudyStartupTestState.FailStartup) {
         $global:LASTEXITCODE = 42
+        return
+    }
+    if (($args -contains 'alembic') -and $global:StudyStartupTestState.FailMigration) {
+        $global:LASTEXITCODE = 43
+        return
+    }
+    if (($args -contains '--force-recreate') -and $global:StudyStartupTestState.FailUpdate) {
+        $global:LASTEXITCODE = 44
+        return
+    }
+    if (($args -contains 'ci') -and $global:StudyStartupTestState.FailDependencies) {
+        $global:LASTEXITCODE = 45
+        return
+    }
+    if (($args -contains 'build') -and $global:StudyStartupTestState.FailBuild) {
+        $global:LASTEXITCODE = 46
         return
     }
     $global:LASTEXITCODE = 0
@@ -89,8 +106,44 @@ try {
     & $launcherPath -NoBrowser -Rebuild
     Assert-Startup ($global:StudyStartupTestState.Copies -eq 1) 'First-run environment setup was skipped.'
     Assert-Startup ($global:StudyStartupTestState.Browsers.Count -eq 0) 'NoBrowser opened a browser.'
-    Assert-Startup ($global:StudyStartupTestState.Commands[1] -contains '--build') 'Rebuild must rebuild images.'
+    Assert-Startup ($global:StudyStartupTestState.Commands[1] -contains 'build') 'Rebuild must rebuild images.'
     Write-Output 'PASS: first-run configuration, NoBrowser and Rebuild.'
+
+    $dependencyCommand = $global:StudyStartupTestState.Commands[2]
+    Assert-Startup (($dependencyCommand -contains 'ci') -and ($dependencyCommand -contains '--no-deps')) 'Rebuild must refresh the persistent frontend dependency volume.'
+    Assert-Startup ($global:StudyStartupTestState.Commands[3] -contains 'up') 'Dependencies must be synchronized before waiting for Web readiness.'
+    Assert-Startup ($global:StudyStartupTestState.Commands[5] -contains '--force-recreate') 'Rebuild must reload application processes.'
+
+    Reset-StartupState
+    & $launcherPath -NoBrowser -Update
+    $migration = $global:StudyStartupTestState.Commands[2]
+    $update = $global:StudyStartupTestState.Commands[3]
+    Assert-Startup (($migration -contains 'alembic') -and ($migration -contains 'head')) 'Update must migrate before recreation.'
+    Assert-Startup (($update -contains '--force-recreate') -and ($update -contains '--wait') -and ($update -contains '--no-deps')) 'Update must recreate application services and wait for health.'
+    Assert-Startup (($update[-3] -eq 'api') -and ($update[-2] -eq 'worker') -and ($update[-1] -eq 'web')) 'Update must target only API, Worker and Web.'
+    Assert-Startup (-not ($update -contains '--build')) 'Source-only update should not rebuild images.'
+    Assert-Startup ($global:StudyStartupTestState.Browsers.Count -eq 0) 'Update NoBrowser opened a browser.'
+    Write-Output 'PASS: Update applies migrations and reloads only application containers.'
+
+    foreach ($failure in @('FailMigration', 'FailUpdate', 'FailDependencies', 'FailBuild')) {
+        Reset-StartupState
+        $global:StudyStartupTestState[$failure] = $true
+        $failed = $false
+        try { & $launcherPath -Rebuild }
+        catch { $failed = $true }
+        Assert-Startup $failed "Expected $failure to fail explicitly."
+        Assert-Startup ($global:StudyStartupTestState.Browsers.Count -eq 0) 'Failed update must not open a browser.'
+        if ($failure -eq 'FailMigration') {
+            Assert-Startup ($global:StudyStartupTestState.Commands.Count -eq 5) 'Migration failure must stop before application recreation.'
+        }
+        if ($failure -eq 'FailDependencies') {
+            Assert-Startup ($global:StudyStartupTestState.Commands.Count -eq 3) 'Dependency failure must stop before application startup.'
+        }
+        if ($failure -eq 'FailBuild') {
+            Assert-Startup ($global:StudyStartupTestState.Commands.Count -eq 2) 'Build failure must stop before dependency install or startup.'
+        }
+        Write-Output "PASS: $failure stops the update and does not open a browser."
+    }
 
     Reset-StartupState
     & $launcherPath -NoBrowser -FollowLogs

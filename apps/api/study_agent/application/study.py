@@ -21,6 +21,7 @@ from study_agent.domain.ports import (
 )
 
 
+# 一次判题的结果，保存是否答对、得分和反馈。
 @dataclass(frozen=True, slots=True)
 class Grade:
     correct: bool
@@ -49,6 +50,7 @@ class AnswerResult:
     idempotent_replay: bool = False
 
 
+# 统一全角、大小写和首尾空白，保留小数点等可能影响答案含义的符号。
 def _normalize_text(value: object) -> str:
     text = unicodedata.normalize("NFKC", str(value)).casefold().strip()
     # Only sentence punctuation is optional; signs, decimal points, slashes and
@@ -60,6 +62,7 @@ def _answer_list(correct_answer: object) -> list[object]:
     return correct_answer if isinstance(correct_answer, list) else [correct_answer]
 
 
+# 用已审核的标准答案判分，填空可匹配显式别名；这里不调用大模型。
 def grade_question(question: Question, answer: object) -> Grade:
     expected = _answer_list(question.correct_answer)
     if question.question_type == "single_choice":
@@ -92,10 +95,12 @@ def grade_question(question: Question, answer: object) -> Grade:
     )
 
 
+# 串起选题、提交答案、掌握度更新和复习安排，组成完整学习闭环。
 class StudyService:
     def __init__(self) -> None:
         self.selector = AdaptiveQuestionSelector()
 
+    # 模拟考试一次固定题序，其他模式先选第一题，后续按作答结果动态选题。
     async def create_session(
         self,
         uow: UnitOfWork,
@@ -202,6 +207,7 @@ class StudyService:
             study_session, current, assignment.selection_reason if assignment else None
         )
 
+    # 先检查重复提交，再判分并保存统计；同一提交不会重复累计成绩。
     async def submit_answer(
         self,
         uow: UnitOfWork,
@@ -405,6 +411,7 @@ class StudyService:
                 questions.append(question)
         return questions
 
+    # 掌握度默认从 0.3 开始；答对补上剩余差距的 15%，答错保留原分的 80%。
     async def _update_mastery(
         self, uow: UnitOfWork, question: Question, correct: bool, now: datetime
     ) -> MasteryRecord:
@@ -426,6 +433,7 @@ class StudyService:
             )
         )
 
+    # 采用简化 SM-2 间隔复习：连续答对逐步延长间隔，答错后重新从一天开始。
     async def _update_review(
         self, uow: UnitOfWork, question: Question, correct: bool, now: datetime
     ) -> ReviewTask:
@@ -459,6 +467,7 @@ class StudyService:
             )
         )
 
+    # 重复请求直接返回已保存的作答结果，避免重算掌握度和复习时间。
     async def _replay_result(
         self,
         uow: UnitOfWork,
@@ -500,6 +509,7 @@ class StudyService:
             idempotent_replay=True,
         )
 
+    # 把学习状态写成 Redis 快照供快速恢复，长期记录仍以 PostgreSQL 为准。
     async def _sync_runtime_state(
         self,
         uow: UnitOfWork,

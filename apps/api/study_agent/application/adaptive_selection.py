@@ -6,6 +6,7 @@ from study_agent.domain.models import Question
 from study_agent.domain.ports import UnitOfWork
 
 
+# 把选中的题目、优先级和选择理由一起返回，方便解释为什么出这道题。
 @dataclass(frozen=True, slots=True)
 class QuestionSelection:
     question: Question
@@ -13,7 +14,9 @@ class QuestionSelection:
     reason: dict[str, object]
 
 
+# 根据薄弱程度、复习到期、难度和做题历史选择下一题。
 class AdaptiveQuestionSelector:
+    # 先排除本轮已选题，再按学习模式筛选和打分；分数相同时用固定顺序排序。
     async def select(
         self,
         uow: UnitOfWork,

@@ -5,6 +5,7 @@ from redis.asyncio import Redis
 from redis.exceptions import RedisError
 
 
+# 缓存当前学习状态并设置过期时间；缓存损坏时回到数据库读取。
 class RedisLearningSessionSnapshotStore:
     """Redis snapshot adapter, independent from LangGraph checkpoints."""
 

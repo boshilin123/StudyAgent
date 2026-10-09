@@ -15,6 +15,7 @@ engine = create_async_engine(settings.database_url, pool_pre_ping=True)
 session_factory = async_sessionmaker(engine, expire_on_commit=False)
 
 
+# 为一次请求提供数据库会话，用完后自动关闭连接。
 async def get_session() -> AsyncIterator[AsyncSession]:
     async with session_factory() as session:
         yield session

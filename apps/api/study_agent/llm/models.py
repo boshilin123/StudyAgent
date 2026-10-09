@@ -16,6 +16,7 @@ from study_agent.config import Settings
 ModelPurpose = Literal["question_generation", "study_explanation", "tutoring"]
 
 
+# 统一创建模型客户端；出题和讲解用基础配置，辅导可使用单独覆盖配置。
 def get_chat_model(settings: Settings, *, purpose: ModelPurpose) -> BaseChatModel:
     """Create a model using only server configuration, with per-field tutor inheritance."""
     if purpose not in {"question_generation", "study_explanation", "tutoring"}:

@@ -27,6 +27,7 @@ class NoInput(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
 
+# 创建四个只读工具：查资料、查已答题、查学习进度和查最近错题。
 def make_tutor_tools(
     queries: LearningQueries, retrieval: LearningMaterialRetrieval
 ) -> list[BaseTool]:

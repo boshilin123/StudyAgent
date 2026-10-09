@@ -157,5 +157,9 @@ async def test_explanation_falls_back_to_bound_question_evidence_without_llm() -
             "chunk_id": str(question.sources[0].chunk_id),
             "quote": "真实原文",
             "rank": 1,
+            "source_kind": "quote",
+            "material_title": None,
+            "page_start": None,
+            "page_end": None,
         }
     ]

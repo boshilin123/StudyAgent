@@ -6,12 +6,19 @@ from pydantic import BaseModel, Field, model_validator
 QuestionType = Literal["single_choice", "fill_blank", "true_false"]
 
 
+# 模型提取的知识点结构，尚未包含数据库 ID 或来源。
 class KnowledgePointDraft(BaseModel):
     canonical_key: str = Field(min_length=2, max_length=300)
     name: str = Field(min_length=2, max_length=300)
     description: str = Field(min_length=5, max_length=2000)
     importance: float = Field(ge=0, le=1)
     difficulty: int = Field(ge=1, le=5)
+
+
+# 后端给知识点补上本组真实原文片段，供保存时使用。
+class SourcedKnowledgePointDraft(KnowledgePointDraft):
+    """Sources assigned by the backend, never requested from the model."""
+
     source_chunk_ids: list[UUID] = Field(min_length=1, max_length=5)
 
 
@@ -19,11 +26,16 @@ class KnowledgePointBatch(BaseModel):
     items: list[KnowledgePointDraft] = Field(min_length=1, max_length=30)
 
 
+class SourcedKnowledgePointBatch(BaseModel):
+    items: list[SourcedKnowledgePointDraft] = Field(min_length=1)
+
+
 class QuestionOption(BaseModel):
     key: Literal["A", "B", "C", "D"]
     text: str = Field(min_length=1, max_length=500)
 
 
+# 模型只需返回出题内容；结构校验保证选项和答案格式合法。
 class GeneratedQuestionDraft(BaseModel):
     knowledge_point_key: str = Field(min_length=2, max_length=300)
     question_type: QuestionType
@@ -32,8 +44,6 @@ class GeneratedQuestionDraft(BaseModel):
     correct_answers: list[str] = Field(min_length=1, max_length=10)
     explanation: str = Field(min_length=5, max_length=3000)
     difficulty: int = Field(ge=1, le=5)
-    source_chunk_ids: list[UUID] = Field(min_length=1, max_length=5)
-    source_quotes: list[str] = Field(min_length=1, max_length=5)
 
     @model_validator(mode="after")
     def validate_type_shape(self) -> "GeneratedQuestionDraft":
@@ -63,3 +73,12 @@ class GeneratedQuestionDraft(BaseModel):
 
 class QuestionBatch(BaseModel):
     items: list[GeneratedQuestionDraft] = Field(min_length=1, max_length=100)
+
+
+# 后端绑定来源后的题目，source_quotes 存的是出题上下文，不是模型摘录的引文。
+class SourcedQuestionDraft(GeneratedQuestionDraft):
+    """Actual generation context attached after model output parsing."""
+
+    source_chunk_ids: list[UUID] = Field(min_length=1, max_length=5)
+    source_quotes: list[str] = Field(min_length=1, max_length=5)
+    source_kind: Literal["reference_context"] = "reference_context"

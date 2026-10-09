@@ -74,6 +74,8 @@ for (const mode of ['练习', '诊断', '复习', '模拟']) {
     await page.getByRole('button', { name: '开始学习', exact: true }).click()
     await page.getByText('A选项', { exact: true }).click()
     await page.getByRole('button', { name: '提交答案' }).click()
+    await expect(page.locator('.evidence-panel').getByText('出题参考原文', { exact: true })).toBeVisible()
+    await page.locator('.evidence-panel summary').first().click()
     await expect(page.getByText('浏览器来源引用')).toBeVisible()
     await page.getByRole('button', { name: '下一题' }).click()
     await page.getByPlaceholder('请输入答案').fill('1.5')

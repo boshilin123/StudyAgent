@@ -4,6 +4,7 @@ from study_agent.agents.tutor.schemas import TutorAnswerDraft
 from study_agent.domain.errors import DomainError
 
 
+# 检查必需工具是否执行、引用是否来自本轮证据，避免虚构个性化结论。
 def validate_draft(
     draft: TutorAnswerDraft, state: dict[str, Any], intent: str, anchored: bool
 ) -> list[dict[str, Any]]:

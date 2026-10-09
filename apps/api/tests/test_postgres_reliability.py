@@ -436,13 +436,17 @@ async def test_rechunk_cleans_sources_and_retryable_stale_vectors(
 
 
 @pytest.mark.asyncio
-@pytest.mark.parametrize("target_count,expected_status", [(1, "completed"), (6, "partial")])
+@pytest.mark.parametrize(
+    "target_count,expected_status,supplement_failure",
+    [(1, "completed", False), (6, "partial", False), (6, "partial", True)],
+)
 @pytest.mark.parametrize("deletion_mode", ["none", "before_retry", "during_index"])
 async def test_generation_retry_deduplicates_and_completed_redelivery_is_noop(
     seeded_database: SimpleNamespace,
     monkeypatch: pytest.MonkeyPatch,
     target_count: int,
     expected_status: str,
+    supplement_failure: bool,
     deletion_mode: str,
 ) -> None:
     from study_agent.infrastructure.models import QuestionGenerationJobModel, WorkflowRunModel
@@ -461,7 +465,6 @@ async def test_generation_retry_deduplicates_and_completed_redelivery_is_noop(
         description="用于验证任务重试的测试知识点",
         importance=0.5,
         difficulty=2,
-        source_chunk_ids=[data.chunk],
     )
     question = GeneratedQuestionDraft(
         knowledge_point_key=point.canonical_key,
@@ -470,14 +473,20 @@ async def test_generation_retry_deduplicates_and_completed_redelivery_is_noop(
         correct_answers=["正确"],
         explanation="资料确实包含该测试来源。",
         difficulty=2,
-        source_chunk_ids=[data.chunk],
-        source_quotes=["TCP测试来源"],
     )
     point_chain = SimpleNamespace(invoke=lambda _: KnowledgePointBatch(items=[point]))
     invalid = question.model_copy(
-        update={"stem": "错误引文候选题", "source_quotes": ["不存在的引文"]}
+        update={"stem": "不存在知识点的候选题", "knowledge_point_key": "unknown-point"}
     )
-    question_chain = SimpleNamespace(invoke=lambda _: QuestionBatch(items=[question, invalid]))
+    question_calls: list[dict] = []
+
+    def invoke_questions(payload):
+        question_calls.append(payload)
+        if supplement_failure and len(question_calls) % 2 == 0:
+            raise ConnectionError("simulated supplement outage")
+        return QuestionBatch(items=[question, invalid])
+
+    question_chain = SimpleNamespace(invoke=invoke_questions)
 
     class IndexStub:
         fail_once = True
@@ -558,7 +567,10 @@ async def test_generation_retry_deduplicates_and_completed_redelivery_is_noop(
         expected_status = "partial"
     result = await asyncio.to_thread(tasks.generate_questions.run, str(job_id), str(data.material))
     assert result["generated_count"] == (0 if deletion_mode == "before_retry" else 1)
-    assert result["rejected_count"] == (2 if deletion_mode == "before_retry" else 1)
+    expected_rejected = (3 if target_count == 6 and not supplement_failure else 1) + (
+        deletion_mode == "before_retry"
+    )
+    assert result["rejected_count"] == expected_rejected
     # A repeated completed delivery must not invoke either model chain again.
     monkeypatch.setattr(
         tasks, "create_question_generation_chain", lambda _: pytest.fail("repeated LLM call")
@@ -567,6 +579,9 @@ async def test_generation_retry_deduplicates_and_completed_redelivery_is_noop(
         await asyncio.to_thread(tasks.generate_questions.run, str(job_id), str(data.material))
         == result
     )
+    assert len(question_calls) == (4 if target_count == 6 else 2)
+    if target_count == 6:
+        assert question.stem in question_calls[-1]["existing_stems"]
     async with data.factory() as session:
         questions = list(
             (
@@ -588,11 +603,28 @@ async def test_generation_retry_deduplicates_and_completed_redelivery_is_noop(
         assert job is not None and job.status == expected_status
         assert len(job.rejected_candidates) == job.rejected_count
         candidate = job.rejected_candidates[0]
-        assert candidate["reason"] == "引文无法在原文片段中匹配"
+        assert candidate["reason"] == "知识点不存在"
         assert candidate["question"]["stem"] == invalid.stem
-        assert candidate["question"]["source_quotes"] == ["不存在的引文"]
+        assert candidate["question"]["source_quotes"] == ["TCP测试来源"]
+        assert candidate["question"]["source_kind"] == "reference_context"
+        sources = list(
+            (
+                await session.scalars(
+                    select(QuestionSourceModel).where(
+                        QuestionSourceModel.question_id
+                        == next(q.id for q in questions if q.stem == question.stem)
+                    )
+                )
+            ).all()
+        )
+        assert len(sources) == 1
+        assert sources[0].source_kind == "reference_context"
+        assert sources[0].chunk_id == data.chunk and sources[0].quote == "TCP测试来源"
+        loaded = await SqlAlchemyUnitOfWork(session).questions.get(sources[0].question_id)
+        assert loaded.sources[0].source_kind == "reference_context"
+        assert loaded.sources[0].material_title == "测试资料"
         if deletion_mode == "before_retry":
-            assert job.rejected_candidates[1]["reason"] == "相同题目已被删除，本次不重新入库"
+            assert job.rejected_candidates[-1]["reason"] == "相同题目已被删除，本次不重新入库"
         if deletion_mode != "none":
             removed = next(item for item in questions if item.stem == question.stem)
             assert removed.status == "deleted" and removed.vector_id is None
@@ -600,7 +632,39 @@ async def test_generation_retry_deduplicates_and_completed_redelivery_is_noop(
                 assert index.deleted == [removed.id]
         if expected_status == "partial":
             assert job.error_code == "QUESTION_GENERATION_PARTIAL"
-            assert "引文无法在原文片段中匹配" in (job.error_message or "")
+            assert "知识点不存在" in (job.error_message or "")
+        if supplement_failure:
+            assert "补充生成未完成，已保留本轮有效题目" in job.error_message
+        if target_count == 1 and deletion_mode == "none":
+            uow = SqlAlchemyUnitOfWork(session)
+            for old_id in data.questions:
+                old = await session.get(QuestionModel, old_id)
+                old.status = "disabled"
+            await session.commit()
+            active = await QuestionService().set_status(
+                uow, FakeQuestionIndex(), loaded.id, "active"
+            )
+            view = await StudyService().create_session(
+                uow,
+                knowledge_base_id=data.kb,
+                mode="practice",
+                question_count=1,
+                question_types=["true_false"],
+                difficulty_min=1,
+                difficulty_max=5,
+            )
+            assert view.current_question.id == active.id
+            answer = await StudyService().submit_answer(
+                uow,
+                session_id=view.session.id,
+                submission_id=uuid4(),
+                question_id=active.id,
+                answer="正确",
+                elapsed_seconds=1,
+            )
+            assert answer.answer_record.verdict == "correct"
+            assert answer.session.status == "completed"
+            assert answer.explanation_data["evidence"][0]["source_kind"] == "reference_context"
 
 
 @pytest.mark.asyncio

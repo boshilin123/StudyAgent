@@ -24,6 +24,7 @@ def psycopg_connection_string(database_url: str) -> str:
     return url.set(drivername="postgresql").render_as_string(hide_password=False)
 
 
+# 打开 PostgreSQL 检查点存储，让辅导图的状态可以跨请求恢复。
 @asynccontextmanager
 async def open_tutor_checkpointer(app: FastAPI) -> AsyncIterator[None]:
     settings = get_settings()

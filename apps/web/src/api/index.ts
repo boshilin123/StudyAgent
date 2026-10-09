@@ -18,6 +18,7 @@ import type {
   UploadResult,
 } from './types'
 
+// 优先显示后端业务提示，避免页面直接暴露 Axios 的技术错误信息。
 export function apiErrorMessage(error: unknown): string {
   if (axios.isAxiosError<ApiErrorBody>(error)) {
     return error.response?.data?.error?.message || error.message || '请求失败'
@@ -56,6 +57,7 @@ export async function listMaterials(knowledgeBaseId: string) {
   ).data
 }
 
+// 文件通过 FormData 上传；解析仍在后台执行，因此返回资料和任务记录。
 export async function uploadMaterial(
   knowledgeBaseId: string,
   file: File,

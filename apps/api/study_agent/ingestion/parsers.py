@@ -22,6 +22,7 @@ def _parse_text(content: bytes, filename: str) -> list[Document]:
     return [document] if document else []
 
 
+# 按 Markdown 标题分段，将标题层级写入元数据，方便后续定位章节。
 def _parse_markdown(content: bytes, filename: str) -> list[Document]:
     text = content.decode("utf-8-sig")
     documents: list[Document] = []
@@ -51,6 +52,7 @@ def _parse_markdown(content: bytes, filename: str) -> list[Document]:
     return documents
 
 
+# 逐页提取 PDF 文本并保存页码；扫描图片型 PDF 没有文字时不能靠此函数识别。
 def _parse_pdf(content: bytes, filename: str) -> list[Document]:
     documents: list[Document] = []
     for page_number, page in enumerate(PdfReader(BytesIO(content)).pages, start=1):
@@ -146,6 +148,7 @@ PARSERS: dict[str, Callable[[bytes, str], list[Document]]] = {
 }
 
 
+# 根据文件扩展名选择解析器，统一返回带来源信息的 Document 列表。
 def parse_document(content: bytes, filename: str) -> list[Document]:
     suffix = Path(filename).suffix.lower()
     parser = PARSERS.get(suffix)

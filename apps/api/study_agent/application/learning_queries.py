@@ -23,6 +23,7 @@ from study_agent.infrastructure.models import (
 )
 
 
+# 给辅导工具提供只读学习数据，并检查知识库和已答题的访问范围。
 class LearningQueries:
     def __init__(self, session_factory: async_sessionmaker[AsyncSession]) -> None:
         self.sessions = session_factory

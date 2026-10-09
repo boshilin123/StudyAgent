@@ -29,6 +29,7 @@ from study_agent.infrastructure.repositories import (
 )
 
 
+# 将各仓储放到同一个数据库事务中，业务层显式决定提交或回滚。
 class SqlAlchemyUnitOfWork:
     def __init__(self, session: AsyncSession) -> None:
         self.session = session

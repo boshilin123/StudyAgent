@@ -9,6 +9,7 @@ from pymilvus import DataType, MilvusClient
 from study_agent.domain.models import Question
 
 
+# 题库向量索引，用于维护题目检索数据；它与原文片段索引是两个集合。
 class MilvusQuestionIndex:
     def __init__(
         self, *, uri: str, collection_name: str, embeddings: Embeddings, embedding_model: str

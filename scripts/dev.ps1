@@ -1,6 +1,7 @@
 param(
     [switch]$NoBrowser,
     [switch]$FollowLogs,
+    [switch]$Update,
     [switch]$Rebuild
 )
 
@@ -35,12 +36,42 @@ if ($webBinding.Count -ne 1 -or [int]$webBinding[0].published -notin 1..65535) {
 }
 $webUrl = "http://localhost:$($webBinding[0].published)"
 
+if ($Rebuild) {
+    Write-Host "Building application images."
+    docker @composeArguments build api worker web
+    if ($LASTEXITCODE -ne 0) {
+        throw "Image build failed. Check the Dockerfile and dependency installation logs."
+    }
+    # Refresh the mounted dependency volume before waiting for the new Web to start.
+    Write-Host "Synchronizing frontend dependencies from package-lock.json."
+    docker @composeArguments run --rm --no-deps web npm ci --no-audit --no-fund
+    if ($LASTEXITCODE -ne 0) {
+        throw "Frontend dependency installation failed. Check npm and network access."
+    }
+}
+
 Write-Host "Starting StudyAgent in background. First-time image builds may take a few minutes."
 $startupArguments = $composeArguments + @("up", "--detach", "--wait", "--wait-timeout", "180")
-if ($Rebuild) { $startupArguments += "--build" }
 docker @startupArguments
 if ($LASTEXITCODE -ne 0) {
     throw "Startup failed or timed out. Check Docker Desktop, then use docker compose logs to diagnose."
+}
+
+# Apply schema updates even when Compose reused an already-running API container.
+# Recreate application services so Worker modules and container environment reload.
+# Named data volumes and infrastructure services are kept.
+if ($Update -or $Rebuild) {
+    Write-Host "Applying database migrations."
+    docker @composeArguments exec --no-TTY api alembic upgrade head
+    if ($LASTEXITCODE -ne 0) {
+        throw "Database migration failed. Application services were not force-recreated."
+    }
+
+    Write-Host "Reloading API, Worker and Web containers."
+    docker @composeArguments up --detach --force-recreate --no-deps --wait --wait-timeout 180 api worker web
+    if ($LASTEXITCODE -ne 0) {
+        throw "Application update failed or timed out. Check api, worker and web logs."
+    }
 }
 
 try {

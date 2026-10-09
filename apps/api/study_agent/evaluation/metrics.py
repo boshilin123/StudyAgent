@@ -15,6 +15,7 @@ def percentile(values: Sequence[float], percent: float) -> float:
     return round(ordered[rank - 1], 3)
 
 
+# 计算检索命中率、召回率、排名和耗时，必须用明确的相关片段作参照。
 def retrieval_metrics(samples: Sequence[dict[str, Any]]) -> dict[str, float | int]:
     if not samples:
         return {
@@ -92,6 +93,7 @@ def _normalized_stem(value: str) -> str:
     return re.sub(r"\W+", "", value, flags=re.UNICODE).lower()
 
 
+# 统计题目结构、来源覆盖和重复率；这些指标不能证明答案全部正确。
 def question_metrics(questions: Iterable[dict[str, Any]]) -> dict[str, Any]:
     items = list(questions)
     total = len(items)

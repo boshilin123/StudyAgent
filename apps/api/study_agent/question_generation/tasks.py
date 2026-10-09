@@ -1,4 +1,5 @@
 import asyncio
+import json
 from collections import Counter
 from datetime import UTC, datetime
 from decimal import Decimal
@@ -30,8 +31,15 @@ from study_agent.question_generation.chains import (
     create_question_generation_chain,
     serialize_knowledge_points,
 )
+from study_agent.question_generation.context import bind_question_context, plan_generation_groups
 from study_agent.question_generation.factory import get_question_index
-from study_agent.question_generation.quality import validate_question_drafts
+from study_agent.question_generation.quality import RejectedQuestion, validate_question_drafts
+from study_agent.question_generation.schemas import (
+    KnowledgePointBatch,
+    SourcedKnowledgePointBatch,
+    SourcedKnowledgePointDraft,
+    SourcedQuestionDraft,
+)
 from study_agent.worker import celery_app
 
 
@@ -75,6 +83,7 @@ async def _mark_failed(job_id: UUID, message: str) -> None:
     await _with_session(operation)
 
 
+# 后台出题任务发生执行异常时有限重试；基础校验拒绝不等于任务执行异常。
 class QuestionGenerationTask(Task):
     autoretry_for = (Exception,)
     retry_backoff = True
@@ -91,20 +100,6 @@ class QuestionGenerationTask(Task):
         if args:
             asyncio.run(_mark_failed(UUID(str(args[0])), str(exc)))
         super().on_failure(exc, task_id, args, kwargs, einfo)
-
-
-def build_generation_context(chunks: list[DocumentChunk], max_chars: int) -> str:
-    """Join chunks within the existing character budget, preserving legacy behavior."""
-    sections: list[str] = []
-    used = 0
-    for chunk in chunks:
-        heading = " / ".join(chunk.heading_path) or "无标题"
-        section = f"[chunk_id={chunk.id}; 标题={heading}; 页码={chunk.page_start}]\n{chunk.content}"
-        if sections and used + len(section) > max_chars:
-            break
-        sections.append(section)
-        used += len(section)
-    return "\n\n".join(sections)
 
 
 def _to_chunk(model: DocumentChunkModel) -> DocumentChunk:
@@ -124,6 +119,7 @@ def _to_chunk(model: DocumentChunkModel) -> DocumentChunk:
     )
 
 
+# 按原文分组提取知识点和出题，绑定来源后保存草稿，题量不足时最多补充一次。
 @celery_app.task(base=QuestionGenerationTask, name="study_agent.generate_questions")
 def generate_questions(job_id: str, material_id: str) -> dict[str, object]:
     async def operation(session: Any) -> dict[str, object]:
@@ -196,24 +192,28 @@ def generate_questions(job_id: str, material_id: str) -> dict[str, object]:
         chunks = [_to_chunk(model) for model in chunk_models]
         if not chunks:
             raise ValueError("material does not contain document chunks")
-        context = build_generation_context(chunks, settings.question_generation_max_context_chars)
+        groups = plan_generation_groups(
+            chunks,
+            target_count=job.target_question_count,
+            max_chars=settings.question_generation_max_context_chars,
+        )
 
         started = datetime.now(UTC)
-        point_batch = await asyncio.to_thread(
-            create_knowledge_point_chain(settings).invoke,
-            {"language": job.language, "context": context},
-        )
-        available_chunk_ids = {chunk.id for chunk in chunks}
-        valid_points = []
-        for point in point_batch.items:
-            valid_source_ids = [
-                chunk_id for chunk_id in point.source_chunk_ids if chunk_id in available_chunk_ids
-            ]
-            if valid_source_ids:
-                valid_points.append(point.model_copy(update={"source_chunk_ids": valid_source_ids}))
-        if not valid_points:
-            raise ValueError("模型未返回包含真实片段来源的知识点")
-        point_batch = point_batch.model_copy(update={"items": valid_points})
+        group_points: list[KnowledgePointBatch] = []
+        sourced_points: list[SourcedKnowledgePointDraft] = []
+        for group in groups:
+            points = await asyncio.to_thread(
+                create_knowledge_point_chain(settings).invoke,
+                {"language": job.language, "context": group.context},
+            )
+            group_points.append(points)
+            sourced_points.extend(
+                SourcedKnowledgePointDraft(
+                    **point.model_dump(), source_chunk_ids=[chunk.id for chunk in group.chunks]
+                )
+                for point in points.items
+            )
+        point_batch = SourcedKnowledgePointBatch(items=sourced_points)
         session.add(
             WorkflowStepModel(
                 id=uuid4(),
@@ -221,7 +221,13 @@ def generate_questions(job_id: str, material_id: str) -> dict[str, object]:
                 sequence=1,
                 node_name="extract_knowledge_points",
                 tool_name=None,
-                input_summary={"chunk_count": len(chunks), "execution_kind": "chain"},
+                input_summary={
+                    "chunk_count": len(chunks),
+                    "context_group_count": len(groups),
+                    "context_chars": sum(len(group.context) for group in groups),
+                    "source_kind": "reference_context",
+                    "execution_kind": "chain",
+                },
                 output_summary={"knowledge_point_count": len(point_batch.items)},
                 status="completed",
                 duration_ms=int((datetime.now(UTC) - started).total_seconds() * 1000),
@@ -232,33 +238,57 @@ def generate_questions(job_id: str, material_id: str) -> dict[str, object]:
         await session.commit()
 
         started = datetime.now(UTC)
-        question_batch = await asyncio.to_thread(
-            create_question_generation_chain(settings).invoke,
-            {
-                "target_count": job.target_question_count,
-                "allowed_types": ", ".join(job.allowed_types),
-                "difficulty_min": job.difficulty_min,
-                "difficulty_max": job.difficulty_max,
-                "language": job.language,
-                "knowledge_points": serialize_knowledge_points(point_batch),
-                "context": context,
-            },
-        )
-        accepted, rejected = validate_question_drafts(
-            knowledge_points=point_batch.items,
-            questions=question_batch.items,
-            chunks=chunks,
-            allowed_types=set(job.allowed_types),
-            difficulty_min=job.difficulty_min,
-            difficulty_max=job.difficulty_max,
-        )
+        accepted: list[SourcedQuestionDraft] = []
+        rejected: list[RejectedQuestion] = []
+        seen_stems: set[str] = set()
+        generation_calls = 0
+
+        async def generate_group(index: int, count: int) -> None:
+            nonlocal generation_calls
+            group = groups[index]
+            points = group_points[index]
+            generation_calls += 1
+            batch = await asyncio.to_thread(
+                create_question_generation_chain(settings).invoke,
+                {
+                    "target_count": count,
+                    "allowed_types": ", ".join(job.allowed_types),
+                    "difficulty_min": job.difficulty_min,
+                    "difficulty_max": job.difficulty_max,
+                    "language": job.language,
+                    "knowledge_points": serialize_knowledge_points(points),
+                    "context": group.context,
+                    "existing_stems": json.dumps(
+                        [item.stem for item in accepted], ensure_ascii=False
+                    ),
+                },
+            )
+            valid, invalid = validate_question_drafts(
+                knowledge_points=points.items,
+                questions=[bind_question_context(item, group) for item in batch.items],
+                chunks=group.chunks,
+                allowed_types=set(job.allowed_types),
+                difficulty_min=job.difficulty_min,
+                difficulty_max=job.difficulty_max,
+                seen_stems=seen_stems,
+            )
+            accepted.extend(valid[:count])
+            rejected.extend(invalid)
+
+        for index, group in enumerate(groups):
+            await generate_group(index, group.target_count)
+        supplemental_count = max(0, job.target_question_count - len(accepted))
+        supplement_error: str | None = None
+        if supplemental_count:
+            # 补充请求失败也保留首轮有效题，避免额外调用拖垮已经完成的出题。
+            try:
+                await generate_group(0, supplemental_count)
+            except Exception as exc:
+                supplement_error = type(exc).__name__
         # Validation failures remain outside the question bank, but are retained for review.
         job.rejected_candidates = [
             {"reason": item.reason, "question": item.question.model_dump(mode="json")}
             for item in rejected
-        ] + [
-            {"reason": "超出本次目标题数", "question": item.model_dump(mode="json")}
-            for item in accepted[job.target_question_count :]
         ]
         session.add(
             WorkflowStepModel(
@@ -270,11 +300,14 @@ def generate_questions(job_id: str, material_id: str) -> dict[str, object]:
                 input_summary={
                     "target_count": job.target_question_count,
                     "execution_kind": "chain",
+                    "generation_calls": generation_calls,
+                    "supplemental_count": supplemental_count,
                 },
                 output_summary={
                     "accepted": len(accepted),
                     "rejected": len(rejected),
                     "rejected_reasons": dict(Counter(item.reason for item in rejected)),
+                    "supplement_error": supplement_error,
                 },
                 status="completed",
                 duration_ms=int((datetime.now(UTC) - started).total_seconds() * 1000),
@@ -371,12 +404,14 @@ def generate_questions(job_id: str, material_id: str) -> dict[str, object]:
                                 question_id=duplicate.id,
                                 chunk_id=chunk_id,
                                 quote=quote,
+                                source_kind="reference_context",
                                 rank=rank,
                             )
                         )
-                    else:
+                    elif source.source_kind == "reference_context":
                         source.quote = quote
                         source.rank = rank
+                        source.source_kind = "reference_context"
                 saved_models.append(duplicate)
                 continue
             model = QuestionModel(
@@ -407,6 +442,7 @@ def generate_questions(job_id: str, material_id: str) -> dict[str, object]:
                         question_id=model.id,
                         chunk_id=chunk_id,
                         quote=quote,
+                        source_kind="reference_context",
                         rank=rank,
                     )
                 )
@@ -456,6 +492,8 @@ def generate_questions(job_id: str, material_id: str) -> dict[str, object]:
                 f"目标 {job.target_question_count} 道，通过校验 {job.generated_count} 道，"
                 f"拒绝 {job.rejected_count} 道。" + (reasons or "模型返回的有效题目不足目标数量")
             )
+            if supplement_error:
+                job.error_message += "；补充生成未完成，已保留本轮有效题目"
         job.stage = "completed"
         job.progress = 100
         job.finished_at = datetime.now(UTC)

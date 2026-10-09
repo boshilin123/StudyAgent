@@ -25,6 +25,7 @@ def _error_body(
     }
 
 
+# 把业务错误和参数错误统一包装成前端能识别的错误响应。
 def register_exception_handlers(app: FastAPI) -> None:
     @app.exception_handler(DomainError)
     async def handle_domain_error(request: Request, exc: DomainError) -> JSONResponse:

@@ -7,6 +7,7 @@ from study_agent.domain.models import KnowledgeBase
 from study_agent.domain.ports import UnitOfWork
 
 
+# 管理知识库及其状态；删除时保留历史记录，但不再允许继续学习。
 class KnowledgeBaseService:
     async def create(
         self,

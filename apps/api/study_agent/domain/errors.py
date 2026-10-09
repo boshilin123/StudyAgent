@@ -1,6 +1,7 @@
 from typing import Any
 
 
+# 业务层用错误码和提示说明失败原因，接口层再转换成 HTTP 响应。
 class DomainError(Exception):
     def __init__(
         self,

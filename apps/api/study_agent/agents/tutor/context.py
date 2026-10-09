@@ -2,6 +2,7 @@ from dataclasses import dataclass
 from uuid import UUID
 
 
+# 服务器确定的本轮知识库与作答范围，模型不能通过工具参数擅自切换。
 @dataclass(frozen=True, slots=True)
 class TutorContext:
     conversation_id: UUID

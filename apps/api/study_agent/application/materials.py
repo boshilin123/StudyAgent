@@ -14,6 +14,7 @@ from study_agent.domain.ports import (
 )
 
 
+# 管理资料上传、重复检查、重新解析和删除，并派发后台处理任务。
 class MaterialService:
     async def create(
         self,
@@ -144,6 +145,7 @@ class MaterialService:
         )
         return list(items), total
 
+    # 删除原文来源并处理失去来源的题目，再清理文件和向量索引。
     async def delete(
         self,
         uow: UnitOfWork,

@@ -5,6 +5,7 @@ from pydantic import Field, field_validator, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
+# 统一读取 .env 和环境变量；模型、数据库、任务队列等配置都从这里获取。
 class Settings(BaseSettings):
     model_config = SettingsConfigDict(
         env_file=(".env", "../../.env"),
@@ -67,9 +68,11 @@ class Settings(BaseSettings):
     embedding_dimensions: int = 384
     embedding_timeout_seconds: float = 30.0
 
+    # 原文块保留少量重叠，减少一个知识点在分块边界被截断的影响。
     chunk_size: int = 800
     chunk_overlap: int = 120
     ingestion_eager: bool = False
+    # 一次出题所选各组原文的总字符预算；补充一轮复用已选择的上下文。
     question_generation_max_context_chars: int = 24000
     study_explanation_enabled: bool = True
 
@@ -101,6 +104,7 @@ class Settings(BaseSettings):
         return self
 
 
+# 缓存配置对象，避免每个请求都重复读取环境变量。
 @lru_cache
 def get_settings() -> Settings:
     return Settings()

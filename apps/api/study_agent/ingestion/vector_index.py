@@ -8,6 +8,7 @@ from pymilvus import DataType, MilvusClient
 from study_agent.domain.models import DocumentChunk, SearchHit
 
 
+# 原文向量库适配器，负责索引创建、向量写入和语义检索。
 class MilvusDocumentIndex:
     def __init__(
         self,
@@ -77,6 +78,7 @@ class MilvusDocumentIndex:
         )
         return [str(chunk.id) for chunk in chunks]
 
+    # 按知识库过滤检索结果，返回片段命中供业务层再次核对。
     async def search(
         self,
         *,

@@ -11,6 +11,7 @@ from study_agent.domain.models import Question, QuestionGenerationJob
 from study_agent.domain.ports import QuestionGenerationDispatcher, QuestionIndex, UnitOfWork
 
 
+# 将题型、题干和答案生成稳定指纹，用于识别同一道题和任务重试去重。
 def question_content_hash(question_type: str, stem: str, correct_answer: object) -> str:
     canonical = json.dumps(
         {
@@ -24,6 +25,7 @@ def question_content_hash(question_type: str, stem: str, correct_answer: object)
     return hashlib.sha256(canonical.encode("utf-8")).hexdigest()
 
 
+# 检查选项和答案能否组成合法题目，不负责判断知识内容是否正确。
 def validate_question_shape(question: Question) -> None:
     answers = question.correct_answer
     if (
@@ -57,7 +59,9 @@ def validate_question_shape(question: Question) -> None:
         raise DomainError("QUESTION_QUALITY_GATE_FAILED", "填空题不能包含选择项", status_code=422)
 
 
+# 处理出题任务、题目编辑和审核启用，是题库业务的入口。
 class QuestionService:
+    # 确认资料已就绪且没有重复任务，再保存任务记录并提交到 Celery。
     async def create_generation_job(
         self,
         uow: UnitOfWork,
@@ -225,6 +229,7 @@ class QuestionService:
         await uow.commit()
         return result
 
+    # 启用前检查题目结构和来源；草稿不会直接参与学习。
     async def set_status(
         self, uow: UnitOfWork, question_index: QuestionIndex, question_id: UUID, status: str
     ) -> Question:

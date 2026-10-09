@@ -14,6 +14,7 @@ from study_agent.config import get_settings
 Probe = Callable[[], Awaitable[None]]
 
 
+# 提供数据库、队列、对象存储等探针，用于判断应用依赖是否可用。
 def get_readiness_probes() -> dict[str, Probe]:
     settings = get_settings()
     timeout = settings.readiness_timeout_seconds

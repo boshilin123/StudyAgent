@@ -92,7 +92,15 @@ powershell.exe -NoProfile -ExecutionPolicy Bypass -File D:\Study\StudyAgent\scri
 
 首次启用辅导时，还须执行上述检查点初始化、API 重启及等待命令；后续运行无需重复初始化。`dev.ps1` 负责服务启动，检查点仍通过显式部署命令管理。
 
-可选参数：`-NoBrowser` 不自动打开页面；`-FollowLogs` 仅跟踪 API、Worker 和 Web 日志；修改依赖或 Dockerfile 后使用 `-Rebuild` 重建镜像。直接用 Compose 后台启动则不会自动打开页面：
+可选参数：`-NoBrowser` 不自动打开页面；`-FollowLogs` 仅跟踪 API、Worker 和 Web 日志；修改代码、`.env` 或迁移后使用 `-Update`，先执行迁移再重新创建 API/Worker/Web 并等待健康；修改依赖或 Dockerfile 后使用 `-Rebuild`，还会重建镜像并同步前端依赖卷。更新时请等待后台任务完成。日常启动仍用不带更新参数的命令。
+
+代码更新后执行：
+
+```powershell
+powershell.exe -NoProfile -ExecutionPolicy Bypass -File D:\Study\StudyAgent\scripts\dev.ps1 -Update
+```
+
+`-Update` 保留数据库、对象存储和向量库的数据卷。直接用 Compose 后台启动则不会自动打开页面：
 
 ```powershell
 docker compose --project-directory D:\Study\StudyAgent up -d --build
@@ -148,7 +156,7 @@ npm.cmd run dev
 - PDF、DOCX、PPTX、TXT、Markdown、XLSX 解析与 LangChain `Document` 标准化。
 - LangChain 文本切块、Celery Chain 异步处理、失败重试和任务进度。
 - Milvus 原文向量索引，以及按知识库和资料过滤的检索接口。
-- LangChain 知识点抽取与单选、填空、判断题生成链，包含来源校验和题目质量门禁。
+- LangChain 知识点抽取与单选、填空、判断题生成链，后端绑定出题参考原文，执行基础校验并保留人工审核。
 - 题库生成异步任务、草稿查询、编辑、启用、停用和 Milvus 题库索引。
 - 单选、填空、判断题的确定性判分，以及会话恢复、幂等提交、掌握度和复习任务。
 - 基于薄弱度、复习到期、历史新鲜度、难度和题型多样性的可解释自适应选题。

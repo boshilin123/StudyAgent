@@ -516,6 +516,7 @@ class SqlAlchemyQuestionGenerationJobRepository:
             await self.session.flush()
 
 
+# 把题目查询与来源加载封装起来，让业务层只接触统一的题目对象。
 class SqlAlchemyQuestionRepository:
     def __init__(self, session: AsyncSession) -> None:
         self.session = session
@@ -565,18 +566,30 @@ class SqlAlchemyQuestionRepository:
         await self.session.flush()
         return [_question_from_model(model, []) for model in orphaned]
 
+    # 批量加载来源及其资料名、页码，避免每道题单独查一次来源。
     async def _sources(self, question_ids: Sequence[UUID]) -> dict[UUID, list[QuestionSource]]:
         if not question_ids:
             return {}
         stmt = (
-            select(QuestionSourceModel)
+            select(QuestionSourceModel, DocumentChunkModel, MaterialModel.title)
+            .join(DocumentChunkModel, DocumentChunkModel.id == QuestionSourceModel.chunk_id)
+            .join(MaterialModel, MaterialModel.id == DocumentChunkModel.material_id)
             .where(QuestionSourceModel.question_id.in_(question_ids))
             .order_by(QuestionSourceModel.question_id, QuestionSourceModel.rank)
         )
         result: dict[UUID, list[QuestionSource]] = {}
-        for model in (await self.session.scalars(stmt)).all():
+        for model, chunk, material_title in (await self.session.execute(stmt)).all():
             result.setdefault(model.question_id, []).append(
-                QuestionSource(chunk_id=model.chunk_id, quote=model.quote, rank=model.rank)
+                QuestionSource(
+                    chunk_id=model.chunk_id,
+                    quote=model.quote,
+                    rank=model.rank,
+                    source_kind=model.source_kind,
+                    material_title=material_title,
+                    page_start=chunk.page_start,
+                    page_end=chunk.page_end,
+                    heading_path=chunk.heading_path,
+                )
             )
         return result
 
@@ -861,6 +874,7 @@ class SqlAlchemyAnswerRecordRepository:
         return [_answer_from_model(model) for model in (await self.session.scalars(stmt)).all()]
 
 
+# 读写知识点掌握度；查询时排除已删除知识库，避免界面显示失效进度。
 class SqlAlchemyMasteryRepository:
     def __init__(self, session: AsyncSession) -> None:
         self.session = session
@@ -905,6 +919,7 @@ class SqlAlchemyMasteryRepository:
         return [_mastery_from_model(model) for model in (await self.session.scalars(stmt)).all()]
 
 
+# 保存并查询复习安排，供到期提醒和复习选题使用。
 class SqlAlchemyReviewTaskRepository:
     def __init__(self, session: AsyncSession) -> None:
         self.session = session

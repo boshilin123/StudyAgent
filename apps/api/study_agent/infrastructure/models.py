@@ -71,6 +71,7 @@ class MaterialModel(TimestampMixin, Base):
     error_message: Mapped[str | None] = mapped_column(Text)
 
 
+# 记录一次工作流运行，保存模型、提示词版本、状态和结果摘要。
 class WorkflowRunModel(Base):
     """Workflow trace mapped to the historical agent_runs physical table."""
 
@@ -200,8 +201,14 @@ class QuestionModel(TimestampMixin, Base):
     vector_id: Mapped[str | None] = mapped_column(String(100))
 
 
+# 题目与原文片段的关联表，同一题和片段只保留一条来源记录。
 class QuestionSourceModel(Base):
     __tablename__ = "question_sources"
+    __table_args__ = (
+        CheckConstraint(
+            "source_kind in ('quote', 'reference_context')", name="ck_question_source_kind"
+        ),
+    )
 
     question_id: Mapped[UUID] = mapped_column(
         ForeignKey("questions.id", ondelete="CASCADE"), primary_key=True
@@ -210,6 +217,9 @@ class QuestionSourceModel(Base):
         ForeignKey("document_chunks.id", ondelete="CASCADE"), primary_key=True
     )
     quote: Mapped[str] = mapped_column(Text, nullable=False)
+    source_kind: Mapped[str] = mapped_column(
+        String(30), default="quote", server_default="quote", nullable=False
+    )
     rank: Mapped[int] = mapped_column(Integer, default=1, nullable=False)
 
 
@@ -271,6 +281,7 @@ class IngestionJobModel(Base):
     )
 
 
+# 记录工作流每一步的输入输出摘要和耗时，便于排查出题任务。
 class WorkflowStepModel(Base):
     """Workflow step trace; a row alone does not imply Agent Tool Calling."""
     __tablename__ = "agent_steps"

@@ -3,6 +3,7 @@ from typing import Literal
 from pydantic import BaseModel, ConfigDict, Field
 
 
+# 模型回复的结构约定；引用只填已取得的证据 ID，正文来源由服务器核对。
 class TutorAnswerDraft(BaseModel):
     model_config = ConfigDict(extra="forbid")
     status: Literal["answered", "needs_clarification", "insufficient_evidence"]

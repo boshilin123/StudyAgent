@@ -1,5 +1,6 @@
 import { createRouter, createWebHistory } from 'vue-router'
 
+// 路由负责页面入口，动态导入让每个页面在访问时再加载。
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
   routes: [
@@ -42,6 +43,7 @@ const router = createRouter({
   ],
 })
 
+// 切换页面后更新浏览器标题，方便区分多个 StudyAgent 标签页。
 router.afterEach((to) => {
   document.title = `${String(to.meta.title ?? 'StudyAgent')} · StudyAgent`
 })

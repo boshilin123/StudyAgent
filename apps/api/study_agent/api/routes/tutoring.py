@@ -57,6 +57,7 @@ async def conversation_detail(
     }
 
 
+# 提交辅导问题并返回本轮结果，具体工具调用和引用检查由业务服务处理。
 @router.post("/conversations/{conversation_id}/messages")
 async def submit_message(
     conversation_id: UUID, payload: SubmitTutorMessage, service: TutorDependency, response: Response

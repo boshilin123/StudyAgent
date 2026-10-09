@@ -273,14 +273,15 @@ onMounted(async () => {
           <div class="explanation-copy">
             <label>结论</label><p>{{ lastResult.rag_explanation.conclusion }}</p>
             <label>理解差距</label><p>{{ lastResult.rag_explanation.gap }}</p>
-            <small>讲解来源：{{ lastResult.rag_explanation.provider === 'langchain' ? 'LangChain 原文讲解' : '题库解析' }}</small>
+            <small>讲解来源：{{ lastResult.rag_explanation.provider === 'langchain' ? 'LangChain 参考原文讲解' : '题库解析' }}</small>
           </div>
           <div class="evidence-panel">
-            <label>原文证据</label>
-            <blockquote v-for="evidence in lastResult.rag_explanation.evidence" :key="evidence.chunk_id">
-              {{ evidence.quote }}<small>chunk {{ evidence.chunk_id.slice(0, 8) }}</small>
-            </blockquote>
-            <p v-if="!lastResult.rag_explanation.evidence.length" class="muted-text">暂无引用</p>
+            <label>出题参考原文</label>
+            <details v-for="evidence in lastResult.rag_explanation.evidence" :key="evidence.chunk_id">
+              <summary>{{ evidence.material_title || '学习资料' }}<span v-if="evidence.page_start"> · 第 {{ evidence.page_start }} 页</span> · {{ evidence.source_kind === 'reference_context' ? '出题上下文' : '原文引文' }}</summary>
+              <blockquote>{{ evidence.quote }}</blockquote>
+            </details>
+            <p v-if="!lastResult.rag_explanation.evidence.length" class="muted-text">暂无参考原文</p>
           </div>
         </div>
         <div class="result-footer">

@@ -150,6 +150,7 @@ class ReviewTaskRepository(Protocol):
     ) -> Sequence[ReviewTask]: ...
 
 
+# 定义一次业务操作需要的仓储和事务接口，让业务逻辑不依赖具体数据库。
 class UnitOfWork(Protocol):
     knowledge_bases: KnowledgeBaseRepository
     materials: MaterialRepository
@@ -188,6 +189,7 @@ class IngestionDispatcher(Protocol):
     def dispatch(self, *, job_id: UUID, material_id: UUID) -> None: ...
 
 
+# 原文向量检索接口；真实实现用 Milvus，测试可以替换成内存实现。
 class DocumentIndex(Protocol):
     async def search(
         self,
@@ -205,6 +207,7 @@ class QuestionGenerationDispatcher(Protocol):
     def dispatch(self, *, job_id: UUID, material_id: UUID) -> None: ...
 
 
+# 题库向量索引接口，与原文索引分开维护。
 class QuestionIndex(Protocol):
     async def upsert_question(self, question: Question) -> str: ...
 

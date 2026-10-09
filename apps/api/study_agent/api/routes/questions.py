@@ -36,6 +36,7 @@ async def list_question_generation_jobs(
     ]
 
 
+# 把用户出题参数交给业务服务，返回可轮询的后台任务记录。
 @material_router.post(
     "/{material_id}/question-generation-jobs",
     response_model=QuestionGenerationJobResponse,

@@ -18,6 +18,7 @@ from study_agent.application.retrieval import LearningMaterialRetrieval
 from study_agent.domain.errors import DomainError
 
 
+# 用模型、只读工具和检查点构建辅导 Agent，并限制调用次数和输出修复次数。
 def create_tutor_agent(
     model: BaseChatModel,
     queries: LearningQueries,

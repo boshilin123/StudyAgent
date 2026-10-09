@@ -15,6 +15,7 @@ from study_agent.agents.tutor.prompts import TUTOR_GRAPH_VERSION, TUTOR_PROMPT_V
 from study_agent.domain.errors import DomainError
 
 
+# 涉及已答题、进度或错题时，先要求读取真实记录，再允许模型给结论。
 def required_tool_request(request: ModelRequest[Any]) -> ModelRequest[Any]:
     """Expose mandatory server-bound reads before allowing optional tools or final output."""
     context = getattr(getattr(request, "runtime", None), "context", None)
@@ -63,6 +64,7 @@ def tool_result_chars(result: ToolMessage | Command[Any]) -> int:
     )
 
 
+# 记录本轮剩余时间、调用次数和用量，防止 Agent 无限循环。
 @dataclass
 class RunBudget:
     deadline: float
@@ -101,6 +103,7 @@ class RunBudget:
         }
 
 
+# 在模型和工具调用前检查预算，并记录执行轨迹。
 class TutorBudgetMiddleware(AgentMiddleware):
     def __init__(self, budget: RunBudget):
         self.budget = budget

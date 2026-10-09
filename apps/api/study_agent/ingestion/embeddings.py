@@ -11,6 +11,7 @@ from pydantic import SecretStr
 from study_agent.config import Settings
 
 
+# 离线开发用的固定向量算法，便于测试，不代表真实语义模型的检索效果。
 class DeterministicEmbeddings(Embeddings):
     """无需外部模型的开发回退，不用于衡量生产检索质量。"""
 
@@ -39,6 +40,7 @@ class DeterministicEmbeddings(Embeddings):
         return self._embed(text)
 
 
+# 把项目的向量调用转换成 TEI 的 /embed 请求。
 class TeiEmbeddings(Embeddings):
     """Hugging Face Text Embeddings Inference `/embed` 适配器。"""
 
@@ -67,6 +69,7 @@ class TeiEmbeddings(Embeddings):
         return self._request([text])[0]
 
 
+# 按配置选择离线、TEI 或 OpenAI 兼容向量服务，并返回模型标识。
 def build_embeddings(settings: Settings) -> tuple[Embeddings, str]:
     if settings.embedding_provider == "tei":
         if not settings.embedding_base_url:

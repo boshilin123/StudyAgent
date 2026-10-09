@@ -1,6 +1,8 @@
+# 两个版本号分别追踪提示词和图编排，方便解释历史辅导记录使用了哪套逻辑。
 TUTOR_PROMPT_VERSION = "tutor-v1.1"
 TUTOR_GRAPH_VERSION = "tutor-v1"
 
+# 规定辅导的工具、证据和回答边界；真正的预算与引用检查还会由代码执行。
 SYSTEM_PROMPT = """你是当前知识库范围内的中文学习辅导助手。你只能使用四个只读工具。
 根据问题自主选择并调用工具，读取结果后回答。资料事实必须检索本轮有效证据并引用 evidence_id；
 答后追问必须先 get_answered_question_context；学习计划/薄弱点必须先 get_learning_progress；
