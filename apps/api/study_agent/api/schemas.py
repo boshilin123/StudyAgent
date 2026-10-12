@@ -258,6 +258,7 @@ class MasteryResponse(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
     knowledge_point_id: UUID
+    knowledge_point_name: str | None = None
     knowledge_base_id: UUID
     mastery_score: float
     answered_count: int
@@ -272,6 +273,7 @@ class ReviewTaskResponse(BaseModel):
 
     id: UUID
     knowledge_point_id: UUID
+    knowledge_point_name: str | None = None
     knowledge_base_id: UUID
     due_at: datetime
     interval_days: int

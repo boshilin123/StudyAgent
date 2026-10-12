@@ -210,6 +210,8 @@ class MasteryRecord:
     recent_accuracy: float
     confidence: float
     updated_at: datetime
+    # 查询时附带真实名称，展示不需要把数据库编号当作名称。
+    knowledge_point_name: str | None = None
 
 
 # 记录一个知识点下次何时复习，以及用于计算间隔的参数。
@@ -225,3 +227,4 @@ class ReviewTask:
     last_quality: int
     status: str
     updated_at: datetime
+    knowledge_point_name: str | None = None

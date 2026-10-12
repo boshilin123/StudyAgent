@@ -9,7 +9,7 @@ from uuid import UUID
 from langchain_core.documents import Document
 
 from study_agent.ingestion.chunking import build_chunks
-from study_agent.question_generation.tasks import build_generation_context
+from study_agent.question_generation.context import plan_generation_groups
 
 
 def run_demo() -> dict[str, object]:
@@ -24,22 +24,29 @@ def run_demo() -> dict[str, object]:
     chunks = build_chunks(documents, **kwargs)
     repeated = build_chunks(documents, **kwargs)
     assert [c.id for c in chunks] == [c.id for c in repeated]
-    context = build_generation_context(chunks, max_chars=24000)
-    selected = [c for c in chunks if f"chunk_id={c.id};" in context]
+    groups = plan_generation_groups(chunks, target_count=10, max_chars=24000)
+    # 每组保留实际送入模型的片段；模型输入不包含数据库 UUID。
+    selected = [chunk for group in groups for chunk in group.chunks]
+    selected_ids = {chunk.id for chunk in selected}
+    context_chars = sum(len(group.context) for group in groups)
     assert 0 < len(selected) < len(chunks)
-    assert chunks[0] in selected and chunks[-1] not in selected
+    assert chunks[0].id in selected_ids and chunks[-1].id in selected_ids
+    assert context_chars <= 24000
+    assert sum(group.target_count for group in groups) == 10
     return {
         "evidence_kind": "production character splitter + generation context; no retrieval",
         "chunk_size_unit": "characters",
         "stable_ids": True,
         "total_chunks": len(chunks),
+        "context_groups": len(groups),
+        "group_targets": [group.target_count for group in groups],
         "selected_chunks": len(selected),
-        "context_chars": len(context),
+        "context_chars": context_chars,
         "configured_max_chars": 24000,
         "selected_pages": [c.page_start for c in selected],
-        "last_page_included": False,
-        "limitation": "当前按顺序选取前部片段；不能保证长资料完整覆盖。",
-        "budget_note": "当前计数未包含片段分隔符，且保留超预算首片段；不是严格总长上限。",
+        "last_page_included": chunks[-1].id in selected_ids,
+        "limitation": "最多取前、中、后三组，每组最多四块；抽样不能保证长资料完整覆盖。",
+        "budget_note": "总字符预算包含标题和分隔符；过长正文截断后按实际输入绑定来源。",
     }
 
 

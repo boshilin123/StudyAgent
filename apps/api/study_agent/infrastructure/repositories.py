@@ -27,6 +27,7 @@ from study_agent.infrastructure.models import (
     DocumentChunkModel,
     IngestionJobModel,
     KnowledgeBaseModel,
+    KnowledgePointModel,
     MasteryRecordModel,
     MaterialModel,
     QuestionGenerationJobModel,
@@ -172,7 +173,9 @@ def _answer_from_model(model: AnswerRecordModel) -> AnswerRecord:
     )
 
 
-def _mastery_from_model(model: MasteryRecordModel) -> MasteryRecord:
+def _mastery_from_model(
+    model: MasteryRecordModel, knowledge_point_name: str | None = None
+) -> MasteryRecord:
     return MasteryRecord(
         knowledge_point_id=model.knowledge_point_id,
         knowledge_base_id=model.knowledge_base_id,
@@ -182,10 +185,13 @@ def _mastery_from_model(model: MasteryRecordModel) -> MasteryRecord:
         recent_accuracy=float(model.recent_accuracy),
         confidence=float(model.confidence),
         updated_at=model.updated_at,
+        knowledge_point_name=knowledge_point_name,
     )
 
 
-def _review_from_model(model: ReviewTaskModel) -> ReviewTask:
+def _review_from_model(
+    model: ReviewTaskModel, knowledge_point_name: str | None = None
+) -> ReviewTask:
     return ReviewTask(
         id=model.id,
         knowledge_point_id=model.knowledge_point_id,
@@ -197,6 +203,7 @@ def _review_from_model(model: ReviewTaskModel) -> ReviewTask:
         last_quality=model.last_quality,
         status=model.status,
         updated_at=model.updated_at,
+        knowledge_point_name=knowledge_point_name,
     )
 
 
@@ -908,15 +915,25 @@ class SqlAlchemyMasteryRepository:
         return _mastery_from_model(model)
 
     async def list(self, knowledge_base_id: UUID | None) -> Sequence[MasteryRecord]:
-        stmt = select(MasteryRecordModel).where(
+        # 一次关联取得名称；已有学习记录也立即使用当前知识点名称。
+        stmt = select(MasteryRecordModel, KnowledgePointModel.name).outerjoin(
+            KnowledgePointModel, MasteryRecordModel.knowledge_point_id == KnowledgePointModel.id
+        ).where(
             MasteryRecordModel.knowledge_base_id.in_(
                 select(KnowledgeBaseModel.id).where(KnowledgeBaseModel.status != "deleted")
             )
         )
         if knowledge_base_id:
             stmt = stmt.where(MasteryRecordModel.knowledge_base_id == knowledge_base_id)
-        stmt = stmt.order_by(MasteryRecordModel.mastery_score, MasteryRecordModel.updated_at.desc())
-        return [_mastery_from_model(model) for model in (await self.session.scalars(stmt)).all()]
+        stmt = stmt.order_by(
+            MasteryRecordModel.mastery_score,
+            MasteryRecordModel.updated_at.desc(),
+            MasteryRecordModel.knowledge_point_id,
+        )
+        return [
+            _mastery_from_model(model, name)
+            for model, name in (await self.session.execute(stmt)).all()
+        ]
 
 
 # 保存并查询复习安排，供到期提醒和复习选题使用。
@@ -973,5 +990,15 @@ class SqlAlchemyReviewTaskRepository:
         ]
         if knowledge_base_id:
             filters.append(ReviewTaskModel.knowledge_base_id == knowledge_base_id)
-        stmt = select(ReviewTaskModel).where(*filters).order_by(ReviewTaskModel.due_at)
-        return [_review_from_model(model) for model in (await self.session.scalars(stmt)).all()]
+        stmt = (
+            select(ReviewTaskModel, KnowledgePointModel.name)
+            .outerjoin(
+                KnowledgePointModel, ReviewTaskModel.knowledge_point_id == KnowledgePointModel.id
+            )
+            .where(*filters)
+            .order_by(ReviewTaskModel.due_at, ReviewTaskModel.id)
+        )
+        return [
+            _review_from_model(model, name)
+            for model, name in (await self.session.execute(stmt)).all()
+        ]

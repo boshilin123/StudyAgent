@@ -141,6 +141,7 @@ export interface StudySession {
 
 export interface Mastery {
   knowledge_point_id: string
+  knowledge_point_name?: string | null
   knowledge_base_id: string
   mastery_score: number
   answered_count: number
@@ -153,6 +154,7 @@ export interface Mastery {
 export interface ReviewTask {
   id: string
   knowledge_point_id: string
+  knowledge_point_name?: string | null
   knowledge_base_id: string
   due_at: string
   interval_days: number

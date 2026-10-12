@@ -1,0 +1,1273 @@
+{
+  "checked_at": "2026-10-12T11:15:34+08:00",
+  "source_baseline": "8aa0ba57f8b8b9f24b77b0508c1a38853780295a",
+  "working_tree_note": "基于 8aa0ba5，加本轮真实知识点名称、每页 5 条和配套教材修改；源码哈希对应实际工作区。",
+  "interpreter": "apps/api/.venv/Scripts/python.exe",
+  "versions": {
+    "python": "3.12",
+    "langchain": "1.4.3",
+    "langgraph": "1.2.12"
+  },
+  "production_behavior_changes_this_pdf_task": false,
+  "totals": {
+    "pdf_files": 9,
+    "pages": 145,
+    "figures": 61,
+    "tables": 63,
+    "formal_chapters": 8,
+    "formal_pages": 139,
+    "formal_figures": 60,
+    "formal_tables": 60,
+    "screenshot_occurrences": 23,
+    "unique_screenshot_assets": 15,
+    "formal_vector_diagrams": 37,
+    "offline_experiments_passed": 15,
+    "rendered_pages": 145,
+    "visually_reviewed_pages": 145,
+    "geometry_issues": 0
+  },
+  "changes": [
+    "第 0 章更新检查基准与容器更新记录",
+    "第 1 章补全文件 / 目录路径、依赖装配位置与辅导阅读路线",
+    "第 5 章新增上下文选择、答后绑定、累计统计范围和自动取证说明，以及一个离线选择实验",
+    "第 7/8 章更新真实进度截图，第 8 章解释名称关联、分页与统计口径",
+    "全部章节核对当前源码入口与行号，保留历史证据的原日期和条件"
+  ],
+  "files": [
+    {
+      "number": 0,
+      "title": "学习前检查与讲解规范",
+      "file": "study/第0章_学习前检查与讲解规范.pdf",
+      "pages": 6,
+      "figures": 1,
+      "tables": 3,
+      "chars": 4990,
+      "bookmarks": 7,
+      "bytes": 322876,
+      "experiments": [
+        {
+          "name": "ch00_current_contract",
+          "stdout": "python dependencies: 1.4.3 1.2.12\nprompt_version: p3-v2-backend-context\nmodel_requests_sources: False\n",
+          "stderr": ""
+        }
+      ],
+      "sha256": "3a3764e758fd689f8dbbcf4ad594cf1fdcebef0601da99dd685e9218013c9942",
+      "internal_toc_links": 14,
+      "bookmark_target_pages": [
+        2,
+        2,
+        3,
+        4,
+        4,
+        5,
+        5
+      ],
+      "embedded_fonts": [
+        "/AAAAAA+Consolas",
+        "/AAAAAA+MicrosoftYaHei-0",
+        "/AAAAAA+MicrosoftYaHei-Bold-0",
+        "/AAAAAB+MicrosoftYaHei-0"
+      ],
+      "pages_rendered": 6,
+      "pages_visually_reviewed": 6,
+      "geometry_issues": []
+    },
+    {
+      "number": 1,
+      "title": "项目全貌与学习闭环",
+      "file": "study/第01章_项目全貌与学习闭环.pdf",
+      "pages": 14,
+      "figures": 8,
+      "tables": 9,
+      "chars": 16920,
+      "bookmarks": 12,
+      "bytes": 1075601,
+      "experiments": [
+        {
+          "name": "route_inventory",
+          "stdout": "/api/knowledge-bases ['get', 'post']\n/api/questions ['get']\n/api/study/sessions ['post']\n/api/tutor/conversations ['get', 'post']\nlangchain: 1.4.3\nlanggraph: 1.2.12\nchunk_chars: 800 120\n",
+          "stderr": ""
+        }
+      ],
+      "sha256": "2a4efaf437304ef173f628eb33d44876c5a923a9c9ee45b90fa616820bd88e47",
+      "internal_toc_links": 24,
+      "bookmark_target_pages": [
+        2,
+        3,
+        4,
+        5,
+        6,
+        9,
+        9,
+        10,
+        11,
+        12,
+        13,
+        13
+      ],
+      "embedded_fonts": [
+        "/AAAAAA+Consolas",
+        "/AAAAAA+MicrosoftYaHei-0",
+        "/AAAAAA+MicrosoftYaHei-Bold-0",
+        "/AAAAAB+MicrosoftYaHei-0",
+        "/AAAAAB+MicrosoftYaHei-Bold-0",
+        "/AAAAAC+MicrosoftYaHei-0"
+      ],
+      "pages_rendered": 14,
+      "pages_visually_reviewed": 14,
+      "geometry_issues": []
+    },
+    {
+      "number": 2,
+      "title": "资料解析、字符分块与元数据",
+      "file": "study/第02章_资料解析与字符分块及元数据.pdf",
+      "pages": 15,
+      "figures": 6,
+      "tables": 7,
+      "chars": 22626,
+      "bookmarks": 11,
+      "bytes": 766521,
+      "experiments": [
+        {
+          "name": "ch02_parse_chunks",
+          "stdout": "documents: 2\nheading: ['网络', '三次握手']\nchunks: 4\nstable_ids: True\nsame_text_other_material_same_id: False\n0 11 7 ['网络'] 'TCP 提供可靠传输。'\n1 15 11 ['网络', '三次握手'] '客户端发送 SYN，服务器回复'\n2 17 8 ['网络', '三次握手'] 'SYN+ACK，客户端回复 ACK'\n3 1 1 ['网络', '三次握手'] '。'\nempty_error: document contains no extractable text\n",
+          "stderr": ""
+        },
+        {
+          "name": "ch02_context_coverage",
+          "stdout": "total_chunks = 64\ngroup_targets = [4, 3, 3]\nselected_pages = [1, 2, 3, 4, 31, 32, 33, 34, 61, 62, 63, 64]\ncontext_chars = 7206\nlast_page_included = True\n",
+          "stderr": ""
+        }
+      ],
+      "sha256": "217734557433cc993b554841c55860d9d36df37c990ff0c365e855e6a7260dfe",
+      "internal_toc_links": 22,
+      "bookmark_target_pages": [
+        2,
+        3,
+        4,
+        6,
+        7,
+        9,
+        10,
+        11,
+        12,
+        13,
+        14
+      ],
+      "embedded_fonts": [
+        "/AAAAAA+Consolas",
+        "/AAAAAA+MicrosoftYaHei-0",
+        "/AAAAAA+MicrosoftYaHei-Bold-0",
+        "/AAAAAB+MicrosoftYaHei-0",
+        "/AAAAAB+MicrosoftYaHei-Bold-0",
+        "/AAAAAC+MicrosoftYaHei-0"
+      ],
+      "pages_rendered": 15,
+      "pages_visually_reviewed": 15,
+      "geometry_issues": []
+    },
+    {
+      "number": 3,
+      "title": "Embedding、Milvus 与 RAG 检索",
+      "file": "study/第03章_Embedding与Milvus及RAG检索.pdf",
+      "pages": 19,
+      "figures": 7,
+      "tables": 6,
+      "chars": 30618,
+      "bookmarks": 11,
+      "bytes": 947193,
+      "experiments": [
+        {
+          "name": "ch03_dense_filter",
+          "stdout": "dimension: 32\nstored_ids: ['tcp-a', 'redis-a', 'tcp-b']\nfiltered_ids: ['tcp-a', 'redis-a']\nscores: [1.0, 0.0]\nexternal_requests: 0\n",
+          "stderr": ""
+        },
+        {
+          "name": "ch03_evidence_pack",
+          "stdout": "quote: 三次握手\npage: 3\nfallback_to_content: True\nversion_in_id: True\ndatabase_requests: 0\n",
+          "stderr": ""
+        }
+      ],
+      "sha256": "5cbca1cea543929bf8a8b9c68e082e17348b9e1f2c8e06fd366382c53ab1ee7c",
+      "internal_toc_links": 22,
+      "bookmark_target_pages": [
+        2,
+        3,
+        5,
+        6,
+        7,
+        9,
+        10,
+        13,
+        15,
+        17,
+        18
+      ],
+      "embedded_fonts": [
+        "/AAAAAA+Consolas",
+        "/AAAAAA+MicrosoftYaHei-0",
+        "/AAAAAA+MicrosoftYaHei-Bold-0",
+        "/AAAAAB+MicrosoftYaHei-0",
+        "/AAAAAB+MicrosoftYaHei-Bold-0",
+        "/AAAAAC+MicrosoftYaHei-0"
+      ],
+      "pages_rendered": 19,
+      "pages_visually_reviewed": 19,
+      "geometry_issues": []
+    },
+    {
+      "number": 4,
+      "title": "LCEL出题、结构化输出与质量门禁",
+      "file": "study/第04章_LCEL出题与结构化输出及质量门禁.pdf",
+      "pages": 20,
+      "figures": 9,
+      "tables": 9,
+      "chars": 30461,
+      "bookmarks": 11,
+      "bytes": 1005791,
+      "experiments": [
+        {
+          "name": "ch04_backend_binding",
+          "stdout": "parsed = 2\naccepted = 1 rejected = 1\nreason = 同批次题干重复\nsource_kind = reference_context\n",
+          "stderr": ""
+        },
+        {
+          "name": "ch04_context_budget",
+          "stdout": "starts = [0, 18, 36]\ntargets = [4, 3, 3]\nwithin_budget = True\nuuid_hidden = True\ntruncated = True\nbound_visible_text = True\n",
+          "stderr": ""
+        }
+      ],
+      "sha256": "c024dbd859b7f32e5398bc3894410042de16e1975b4780c2e93a996c5d2354f0",
+      "internal_toc_links": 22,
+      "bookmark_target_pages": [
+        2,
+        3,
+        4,
+        6,
+        8,
+        9,
+        11,
+        14,
+        17,
+        18,
+        19
+      ],
+      "embedded_fonts": [
+        "/AAAAAA+Consolas",
+        "/AAAAAA+MicrosoftYaHei-0",
+        "/AAAAAA+MicrosoftYaHei-Bold-0",
+        "/AAAAAB+MicrosoftYaHei-0",
+        "/AAAAAB+MicrosoftYaHei-Bold-0",
+        "/AAAAAC+MicrosoftYaHei-0"
+      ],
+      "pages_rendered": 20,
+      "pages_visually_reviewed": 20,
+      "geometry_issues": []
+    },
+    {
+      "number": 5,
+      "title": "辅导 Agent、工具与 Middleware",
+      "file": "study/第05章_辅导Agent与工具及Middleware.pdf",
+      "pages": 20,
+      "figures": 9,
+      "tables": 9,
+      "chars": 28061,
+      "bookmarks": 12,
+      "bytes": 989680,
+      "experiments": [
+        {
+          "name": "ch05_agent_tool_loop_and_citation",
+          "stdout": "case: answered ['fixture:tcp:1'] {'model_calls': 2, 'tool_calls': 1, 'total_tokens': None, 'known': False}\ncase: insufficient_evidence [] {'model_calls': 2, 'tool_calls': 1, 'total_tokens': None, 'known': False}\nforged_citation: TUTOR_INVALID_CITATION\ntool_loop_assertions: passed\n",
+          "stderr": ""
+        },
+        {
+          "name": "ch05_context_selection",
+          "stdout": "materials label: materials\nprogress label: progress\nanchored label: answered_question\nmistake keywords: mistakes\nspecific question bound: False\n",
+          "stderr": ""
+        }
+      ],
+      "sha256": "1b2d3fd72b0258bfea16a1c2dff7b2e3f76bc7b4941c7a67f83ec40c1ce2d5e6",
+      "internal_toc_links": 24,
+      "bookmark_target_pages": [
+        2,
+        3,
+        4,
+        6,
+        8,
+        10,
+        11,
+        12,
+        14,
+        16,
+        18,
+        19
+      ],
+      "embedded_fonts": [
+        "/AAAAAA+Consolas",
+        "/AAAAAA+MicrosoftYaHei-0",
+        "/AAAAAA+MicrosoftYaHei-Bold-0",
+        "/AAAAAB+MicrosoftYaHei-0",
+        "/AAAAAB+MicrosoftYaHei-Bold-0",
+        "/AAAAAC+MicrosoftYaHei-0"
+      ],
+      "pages_rendered": 20,
+      "pages_visually_reviewed": 20,
+      "geometry_issues": []
+    },
+    {
+      "number": 6,
+      "title": "LangGraph 节点、条件边与中断恢复",
+      "file": "study/第06章_LangGraph节点与条件边及中断恢复.pdf",
+      "pages": 14,
+      "figures": 6,
+      "tables": 7,
+      "chars": 19735,
+      "bookmarks": 11,
+      "bytes": 669143,
+      "experiments": [
+        {
+          "name": "reducer_overwrite",
+          "stdout": "empty {'trace': ['start', 'append'], 'count': 1}\nclear {'trace': [], 'count': 1}\n",
+          "stderr": ""
+        },
+        {
+          "name": "review_resume",
+          "stdout": "True accepted ['retrieve', 'draft', 'review']\nFalse rejected ['retrieve', 'draft', 'review']\nmissing: insufficient_evidence ['retrieve', 'missing']\n",
+          "stderr": ""
+        }
+      ],
+      "sha256": "f0e70416356790eb6c2f23dc0926938c613238f8e28ccc8c2508301036f8aa20",
+      "internal_toc_links": 22,
+      "bookmark_target_pages": [
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9,
+        11,
+        12,
+        13
+      ],
+      "embedded_fonts": [
+        "/AAAAAA+Consolas",
+        "/AAAAAA+MicrosoftYaHei-0",
+        "/AAAAAA+MicrosoftYaHei-Bold-0",
+        "/AAAAAB+MicrosoftYaHei-0",
+        "/AAAAAB+MicrosoftYaHei-Bold-0",
+        "/AAAAAC+MicrosoftYaHei-0"
+      ],
+      "pages_rendered": 14,
+      "pages_visually_reviewed": 14,
+      "geometry_issues": []
+    },
+    {
+      "number": 7,
+      "title": "业务状态、检查点与幂等恢复",
+      "file": "study/第07章_业务状态与检查点及幂等恢复.pdf",
+      "pages": 17,
+      "figures": 6,
+      "tables": 6,
+      "chars": 33985,
+      "bookmarks": 11,
+      "bytes": 1126894,
+      "experiments": [
+        {
+          "name": "ch07_accepted_checkpoint_isolation",
+          "stdout": "same_request_hash: True\nchanged_intent_hash: False\nfirst_status: answered\nlatest_contains_unaccepted: True\nnext_input_contains_unaccepted: False\nnew_turn_evidence_ids: ['fixture:tcp:1']\n",
+          "stderr": "Deserializing unregistered type study_agent.agents.tutor.schemas.TutorAnswerDraft from checkpoint. This will be blocked in a future version. Set LANGGRAPH_STRICT_MSGPACK=true to block now, or add to allowed_msgpack_modules to allow explicitly: [('study_agent.agents.tutor.schemas', 'TutorAnswerDraft')]\n"
+        }
+      ],
+      "sha256": "4f9e9de97b065fc48d1cc2335e372292801362a139b2d7c500a433a044925edc",
+      "internal_toc_links": 22,
+      "bookmark_target_pages": [
+        2,
+        3,
+        5,
+        6,
+        7,
+        9,
+        10,
+        11,
+        13,
+        15,
+        16
+      ],
+      "embedded_fonts": [
+        "/AAAAAA+Consolas",
+        "/AAAAAA+MicrosoftYaHei-0",
+        "/AAAAAA+MicrosoftYaHei-Bold-0",
+        "/AAAAAB+MicrosoftYaHei-0",
+        "/AAAAAB+MicrosoftYaHei-Bold-0",
+        "/AAAAAC+MicrosoftYaHei-0"
+      ],
+      "pages_rendered": 17,
+      "pages_visually_reviewed": 17,
+      "geometry_issues": []
+    },
+    {
+      "number": 8,
+      "title": "自适应学习与评估复盘",
+      "file": "study/第08章_自适应学习与评估复盘.pdf",
+      "pages": 20,
+      "figures": 9,
+      "tables": 7,
+      "chars": 34589,
+      "bookmarks": 13,
+      "bytes": 2247155,
+      "experiments": [
+        {
+          "name": "ch08_learning_rules",
+          "stdout": "1 True 0.405 1 1 2.6\n2 True 0.4943 6 2 2.7\n3 False 0.3954 1 0 2.38\naccuracy = 0.6667\nconfidence = 0.3\n",
+          "stderr": ""
+        },
+        {
+          "name": "ch08_evaluation_metrics",
+          "stdout": "retrieval = {'sample_count': 3, 'hit_at_1': 0.3333, 'hit_at_3': 0.6667, 'hit_at_5': 0.6667, 'recall_at_5': 0.6667, 'mrr': 0.5, 'latency_p50_ms': 20.0, 'latency_p95_ms': 100.0}\naudit = {'question_count': 1, 'schema_valid_rate': 1.0, 'source_traceable_rate': 1.0, 'exact_duplicate_rate': 0.0, 'type_distribution': {'single_choice': 1}, 'status_distribution': {'draft': 1}}\n",
+          "stderr": ""
+        }
+      ],
+      "sha256": "3dd8b8204b689384cba3faff205e1a94733abd805d62caa7b93f3ff2a2c78877",
+      "internal_toc_links": 26,
+      "bookmark_target_pages": [
+        2,
+        4,
+        5,
+        7,
+        9,
+        10,
+        11,
+        13,
+        15,
+        16,
+        17,
+        18,
+        19
+      ],
+      "embedded_fonts": [
+        "/AAAAAA+Consolas",
+        "/AAAAAA+MicrosoftYaHei-0",
+        "/AAAAAA+MicrosoftYaHei-Bold-0",
+        "/AAAAAB+MicrosoftYaHei-0",
+        "/AAAAAB+MicrosoftYaHei-Bold-0",
+        "/AAAAAC+MicrosoftYaHei-0"
+      ],
+      "pages_rendered": 20,
+      "pages_visually_reviewed": 20,
+      "geometry_issues": []
+    }
+  ],
+  "source_sha256": {
+    "README.md": "65747d78f62a321ba9c259cb1e4c8643f8868544b9dca4e5dd9b0453aa7fbbef",
+    "apps/api/migrations/versions/0009_出题参考原文.py": "6a12f6eccb4036752cb5b4021824ba81a68881b7e506a5dd63b3c618b96c3f35",
+    "apps/api/study_agent/agents/tutor/agent.py": "09535f0461a183e802c1ba64585aebd2869e2d613adb45d5f1b6a08aef31d11a",
+    "apps/api/study_agent/agents/tutor/context.py": "b19c1b9a2507df4b5d45abadd11148a4ae18a6cfd6e41a294f5bf133284d0577",
+    "apps/api/study_agent/agents/tutor/middleware.py": "d5dc0a285189e5ad4bb93881f5cd02b566fa60a18a9bb0d25e5f5c1ca96d9862",
+    "apps/api/study_agent/agents/tutor/state.py": "479d9d35ffd5cdceebfc7cfad451989e806a133696da6f220d821fa821e6b696",
+    "apps/api/study_agent/agents/tutor/tools.py": "fe0b3c973daa6446bdcf0f70be3b5e8d391098233a82ab7675889090246ea7f3",
+    "apps/api/study_agent/agents/tutor/validation.py": "ba162f1cd70a5a11c28bb23a92584ff978f2cf9a868e766cb66466ab01b40da8",
+    "apps/api/study_agent/api/dependencies.py": "8643f2048039c21f55e5d58eb320d1c716f9ddbef4ea5f43bba56dee31567325",
+    "apps/api/study_agent/api/router.py": "d1429913f19c43b08daaea98f0ec2301577841b7f3b4fc08842dfbe3f40df8b8",
+    "apps/api/study_agent/api/tutoring_dependencies.py": "efc22e2bbae6ac6738ce270fb0457adfab1cbad901230666b6d3adaf8f482046",
+    "apps/api/study_agent/application/adaptive_selection.py": "7386a4d8d3503be59b4457b1a2b9d04f01a41d6948293fff40a0ea06c8490a52",
+    "apps/api/study_agent/application/retrieval.py": "aba943738f7b0716a1a0992b191299fb1a7e1e935e54b43fcb5203fd94e38459",
+    "apps/api/study_agent/application/study.py": "b39ef9667826e02e41420fd50c8ed926a0cf2b666c4e806981275949473e5bde",
+    "apps/api/study_agent/application/study_explanations.py": "1807e505fbebcd0af90ef3268a30b98af9f0b638717037cf7fbffcd1af01e420",
+    "apps/api/study_agent/application/tutoring.py": "3874a54302f6c1e2bfc45e47fde6b5adee7a6aae8147b79bfdce0d206de7b1e5",
+    "apps/api/study_agent/config.py": "8568dfaa797b5373285ec6fcd68028e4592dfaf6affce96afe76215e0dbde6e5",
+    "apps/api/study_agent/domain/models.py": "28a97ce29e175d6fff7113d630e01970fc7c820b9a57334efdbcddeec832b1ca",
+    "apps/api/study_agent/domain/ports.py": "372a009e7eb3653de7c75f897c8873617d63472112c234319deedd5bbe0c0a7e",
+    "apps/api/study_agent/evaluation/metrics.py": "dee46b9109101b2ed8e748d306a4751da467cbddba72c281d626d86648881f5f",
+    "apps/api/study_agent/infrastructure/checkpointer.py": "8a5a55cc150b889289399b39639c9a4ee5fd7cd6216b48c0c4d1d606332b3a44",
+    "apps/api/study_agent/infrastructure/repositories.py": "bb8d55aac356fbc9f73a19147b378e70ea4094a006b046a8e90ddedee822e02d",
+    "apps/api/study_agent/infrastructure/study_state.py": "7bb34e21cdd2b9dd99bc2720bb81b183c5f4382c896ab0f711d47806f33dc76c",
+    "apps/api/study_agent/infrastructure/tutoring.py": "dcc8287e61c4fdf4e0b454dd5e890dea80856283606f1e7d819cfb7e3e5b2c81",
+    "apps/api/study_agent/infrastructure/tutoring_models.py": "c9b288557ee66aa6d8b1958338ffe4249cca04a4a1646220a10c614bb8a3abf4",
+    "apps/api/study_agent/ingestion/chunking.py": "0eb33d1914cfb700195b2cf54357a508389e1d6f110781cbb325dc8e246ae265",
+    "apps/api/study_agent/ingestion/dispatcher.py": "107106c8894020b8c637b3d8d987ec583a67d0f177c099ac5165b23240b13e5a",
+    "apps/api/study_agent/ingestion/embeddings.py": "5ee3e85742a04e666955faa48be6565d5b8944d5326de8c6581aac85194e6865",
+    "apps/api/study_agent/ingestion/parsers.py": "27163622569075df43b3da33786665fa9dfc6070cac519fac1fdc904105d3164",
+    "apps/api/study_agent/ingestion/tasks.py": "4cfd28d5e4f7a2f837b13537c0ed27cf700dda2db96437e157422aa603bf6f68",
+    "apps/api/study_agent/ingestion/vector_index.py": "ad9870a86d06075140d1b1a8d7f2e12ae3a85badae4b41630c3c3a0d5da979e3",
+    "apps/api/study_agent/main.py": "30a3ca31c9f58cf9a8d9990230eada584e2f2176528335f3683879f546044dd3",
+    "apps/api/study_agent/question_generation/chains.py": "4dc2b4627e0b87da6824c39a1ca9bf07efa9c4d705c93c521fb5a25a19c4e55b",
+    "apps/api/study_agent/question_generation/context.py": "961ea99691113f097ddcfca935765605e6d698c4ea4562c9b47d60af496bf6e1",
+    "apps/api/study_agent/question_generation/quality.py": "3f4aad15f63f6ed3deb72db4390525298b5e3fac7351218163bb9f835ca20f5b",
+    "apps/api/study_agent/question_generation/schemas.py": "8c9d2e2afa81f146ec67a35d21bfb23fbfd5a81c9e08d756182da59508d2caab",
+    "apps/api/study_agent/question_generation/tasks.py": "2b62c91d3793d1e6d235fc4338ab11d73ceb63ee1dac0ac7d3cff71e37d4d469",
+    "apps/api/study_agent/question_generation/vector_index.py": "afcba7308304728631f9163c979afcd1250f33963fee603b294a5c14867a2931",
+    "apps/api/tests/test_adaptive_learning.py": "9eee04a40e8261a6029e1ca3b6221c439dc46f798d1a86c9b99f88a5d3179c3e",
+    "apps/api/tests/test_deleted_library_progress_postgres.py": "c7a71677c433e68911aee996d859641422799d9a47e6e649ee7f8ac209020093",
+    "apps/api/tests/test_question_generation.py": "c2e8b95a33e579c3f80521363dd0cddb052b7c750fc4419c6c858d6e100e055a",
+    "apps/api/tests/test_study_grading.py": "9b56e406efc212980319bcaf4638189623a617c927adfceef1290b45054033dc",
+    "apps/api/tests/test_tutor_acceptance.py": "095922ac9e6c0e4eb44d26b7744835c824c0b8fefeb137754ad305d23df8faf1",
+    "apps/api/tests/test_tutor_postgres_acceptance.py": "66d5557011a215151e59b87b469e357fc267c40124335d216230e6be4db636bd",
+    "apps/web/src/views/ProgressView.vue": "b4abae113f5734034d010cb6f7c9f6d471e96f7e37651c8d1c198ea6a42ae3d9",
+    "apps/web/src/views/StudyView.vue": "c58ad662968956ecf8f8a173a23f1ab0ced9c63be4747b6ace1d1b061b3aabbb",
+    "apps/web/src/views/TutorView.vue": "76f880c8ba62573532bfd5983c74140f49c9a2eaa76624241601e8760b175320",
+    "apps/web/tests/e2e/progress.spec.ts": "357633b4a13eceda02ff51cf3b43d42adc78360fdb03c4ae5884f36edf781d16",
+    "docs/技术方案/学习准备与章节计划.md": "1a498a77f815d00f7ad81c323012707b255769d59a4d3a1b922c62dbc1b9179a",
+    "evaluation/results/2026-09-28-P8题库审计-59道.json": "9d76dcfdf3859887bec46c176f753a60087cbaa3c8ab483dae0639eeef732849",
+    "evaluation/results/2026-09-28-TCP检索评测-text-embedding-v4-30条.json": "fbb32666d8dc4b6646083414dff96decb11a77fa9a2379064de232e73b4d6480",
+    "evaluation/results/2026-10-07-学习准备验证.json": "f0a73093479e8806d8f1e008b6cabf77227df8abbb515dc395ed54d0c8772144",
+    "examples/learning/agent_tool_loop.py": "12a1f079ec07364e61c90fbbc5f2e52828e3a424882254504f04a70c6b7db600",
+    "examples/learning/langgraph_review.py": "b870c0bad47febb61a1ecec0529b7e0e5210dab3c5a61f82ebf244f922bb9ae6",
+    "examples/learning/rag_context.py": "d06cf5379a99df93949df4d43671e16022d6d51890db7b0861803a33b09f8e83",
+    "scripts/dev.ps1": "082f8ceab6b15cd60276f0ed8ce71fb319ea6872f64a44c2d111acd11ab43953",
+    "scripts/准备学习环境.ps1": "00342fc50a94fc7958c5123f3ef773206c7a60076a67db35b11fb097eb73a85d"
+  },
+  "source_excerpt_ranges": [
+    {
+      "chapter": 1,
+      "path": "apps/api/study_agent/api/router.py",
+      "start": 1,
+      "end": 19,
+      "excerpt_sha256": "471c1848dfa5e8f0906704c122d4db70f1c7016d51080ebf37256e1bf055096d"
+    },
+    {
+      "chapter": 1,
+      "path": "apps/api/study_agent/domain/models.py",
+      "start": 71,
+      "end": 86,
+      "excerpt_sha256": "3d4fe94cc1a794c1afbeb430064de9756ba2c2467259822f7c53ea22f407a451"
+    },
+    {
+      "chapter": 1,
+      "path": "apps/api/study_agent/api/tutoring_dependencies.py",
+      "start": 13,
+      "end": 24,
+      "excerpt_sha256": "5bef3b31f5ca72e7c50938dc711ac66a42859e68a5893dd7de2bdaa07a81db95"
+    },
+    {
+      "chapter": 2,
+      "path": "apps/api/study_agent/ingestion/parsers.py",
+      "start": 140,
+      "end": 160,
+      "excerpt_sha256": "af050994283aab232b5ef7c47d8d94c6a1a410ce009406440249c9c96a280279"
+    },
+    {
+      "chapter": 2,
+      "path": "apps/api/study_agent/ingestion/parsers.py",
+      "start": 56,
+      "end": 68,
+      "excerpt_sha256": "eee17cd5cc8ef585e56027bbaeb919eb10110ad8e0947b25be50e639ebffd97d"
+    },
+    {
+      "chapter": 2,
+      "path": "apps/api/study_agent/ingestion/parsers.py",
+      "start": 32,
+      "end": 50,
+      "excerpt_sha256": "c7537b7e05ae326092a121c44c5fd8eccf7ff29956abbb1dce06c4cb958aa047"
+    },
+    {
+      "chapter": 2,
+      "path": "apps/api/study_agent/ingestion/chunking.py",
+      "start": 29,
+      "end": 43,
+      "excerpt_sha256": "3f2944d321250fc88a8802546d78dab6768f3750bdd605f920fa31ef80d11941"
+    },
+    {
+      "chapter": 2,
+      "path": "apps/api/study_agent/ingestion/chunking.py",
+      "start": 44,
+      "end": 61,
+      "excerpt_sha256": "dc14407230aacb34086c90d7a18f2c15fa81d521da6c227016d699e9be8bfb62"
+    },
+    {
+      "chapter": 2,
+      "path": "apps/api/study_agent/ingestion/tasks.py",
+      "start": 125,
+      "end": 139,
+      "excerpt_sha256": "c991c40e9e41ea683996ff30a812b7714bab186ce940b867817272ca98df2ef2"
+    },
+    {
+      "chapter": 3,
+      "path": "apps/api/study_agent/ingestion/embeddings.py",
+      "start": 73,
+      "end": 101,
+      "excerpt_sha256": "5838e205d475ab1d68f669a25d7639918c08f91de38695111f9e721ff90561d4"
+    },
+    {
+      "chapter": 3,
+      "path": "apps/api/study_agent/ingestion/vector_index.py",
+      "start": 26,
+      "end": 54,
+      "excerpt_sha256": "1b33a682fe3a985d8f8bb3f18f4f55ac1b06f8fc753074b176d55bfe22d05a6f"
+    },
+    {
+      "chapter": 3,
+      "path": "apps/api/study_agent/ingestion/vector_index.py",
+      "start": 56,
+      "end": 79,
+      "excerpt_sha256": "0f88d0bfc87890badab97e266ff624d721768182c0cf46e6e77d70443c1a3a4f"
+    },
+    {
+      "chapter": 3,
+      "path": "apps/api/study_agent/ingestion/vector_index.py",
+      "start": 90,
+      "end": 110,
+      "excerpt_sha256": "8952be59e8776ef8efd3e96ff80e57d72641db4b04197fbf60c7e0a35ce6e599"
+    },
+    {
+      "chapter": 3,
+      "path": "apps/api/study_agent/application/retrieval.py",
+      "start": 16,
+      "end": 30,
+      "excerpt_sha256": "1d4d96b7cbc02d8fa5805d05b7fc228b65019553a31b95fad06ac9a5608707d0"
+    },
+    {
+      "chapter": 3,
+      "path": "apps/api/study_agent/application/retrieval.py",
+      "start": 68,
+      "end": 86,
+      "excerpt_sha256": "ec7f8008450f0382f6370fc2ce856be32afabbcb956218950c5cdd26903b526d"
+    },
+    {
+      "chapter": 4,
+      "path": "apps/api/study_agent/question_generation/context.py",
+      "start": 35,
+      "end": 58,
+      "excerpt_sha256": "4ee05992d5e436dbe19f50bb0a0f791165541adf155504024b8f54191151a7e9"
+    },
+    {
+      "chapter": 4,
+      "path": "apps/api/study_agent/question_generation/context.py",
+      "start": 56,
+      "end": 74,
+      "excerpt_sha256": "96c571e63a718d82ddab1e24a589b006247c92cd4f8841ac916aded4954dc98d"
+    },
+    {
+      "chapter": 4,
+      "path": "apps/api/study_agent/question_generation/chains.py",
+      "start": 17,
+      "end": 42,
+      "excerpt_sha256": "f20e42090ad69e6f650a25ee3c4f48a3ce3da9e434aa923771cb56798d9fddb0"
+    },
+    {
+      "chapter": 4,
+      "path": "apps/api/study_agent/question_generation/schemas.py",
+      "start": 49,
+      "end": 71,
+      "excerpt_sha256": "a8a955719535a08af2704a0f68cdbfcc992f766b5d7fa8284c41247246191966"
+    },
+    {
+      "chapter": 4,
+      "path": "apps/api/study_agent/question_generation/context.py",
+      "start": 78,
+      "end": 86,
+      "excerpt_sha256": "91813776a9afb5b5d741cf7d89384f7655fc5a973d3bc25de0dda3a20b71f38d"
+    },
+    {
+      "chapter": 4,
+      "path": "apps/api/study_agent/question_generation/quality.py",
+      "start": 37,
+      "end": 66,
+      "excerpt_sha256": "b32302991886ae05a1209096321522f51f093e487085704a5f23073e9ab6797a"
+    },
+    {
+      "chapter": 5,
+      "path": "apps/api/study_agent/agents/tutor/agent.py",
+      "start": 38,
+      "end": 65,
+      "excerpt_sha256": "372d4addd4d41bdaa9e929c4851b30f00cf79b95169313d5e700bea58bc0f9bf"
+    },
+    {
+      "chapter": 5,
+      "path": "apps/api/study_agent/agents/tutor/tools.py",
+      "start": 58,
+      "end": 82,
+      "excerpt_sha256": "9f0ab0f8ebb6e921ae1ec4051a3f6593f2fc97ba893fc8cb98df920f07daa1b9"
+    },
+    {
+      "chapter": 5,
+      "path": "apps/api/study_agent/agents/tutor/tools.py",
+      "start": 36,
+      "end": 56,
+      "excerpt_sha256": "6fd671e1971a20bcc28db8ad5e33facbb66bf4a293f021decb3e5b19e920bdf0"
+    },
+    {
+      "chapter": 5,
+      "path": "apps/api/study_agent/agents/tutor/middleware.py",
+      "start": 29,
+      "end": 44,
+      "excerpt_sha256": "931ee6c757dd9e45327ba20cca137f1d076785c783846708ed30ad571aa90307"
+    },
+    {
+      "chapter": 5,
+      "path": "apps/api/study_agent/application/tutoring.py",
+      "start": 172,
+      "end": 197,
+      "excerpt_sha256": "fc918f0c4315f4c3569b8d27ece977b0621c13c24ba538959f80371736e88716"
+    },
+    {
+      "chapter": 6,
+      "path": "examples/learning/langgraph_review.py",
+      "start": 8,
+      "end": 30,
+      "excerpt_sha256": "d990c261bf7244a5b3326f2a8c8f8b634549e3ea1193a613fbef27d16a51f680"
+    },
+    {
+      "chapter": 6,
+      "path": "examples/learning/langgraph_review.py",
+      "start": 33,
+      "end": 50,
+      "excerpt_sha256": "3c6ae1b4014c82e67b0d80c71333caeda767e97ee7a71520ffb84c2bcedd7de1"
+    },
+    {
+      "chapter": 6,
+      "path": "examples/learning/langgraph_review.py",
+      "start": 53,
+      "end": 69,
+      "excerpt_sha256": "81509aa8142da463c12aa03773de11bff22034f89b6cb640d1c600b664b8010e"
+    },
+    {
+      "chapter": 6,
+      "path": "examples/learning/langgraph_review.py",
+      "start": 70,
+      "end": 89,
+      "excerpt_sha256": "15afba3bc1fb2dbb00c5eed77f4c3c61f463ed6003cd10dac5a0d6dc767f164f"
+    },
+    {
+      "chapter": 6,
+      "path": "apps/api/study_agent/agents/tutor/agent.py",
+      "start": 24,
+      "end": 49,
+      "excerpt_sha256": "bcec1047c2a393d3225dad5fe6eb575ffece5fe7b758c41170c819f63e2f4a79"
+    },
+    {
+      "chapter": 7,
+      "path": "apps/api/study_agent/infrastructure/tutoring_models.py",
+      "start": 36,
+      "end": 58,
+      "excerpt_sha256": "fc4c35164604cdd228631d9dcf8873547d6cc84e2d32abcdef696c8b28eb7ec9"
+    },
+    {
+      "chapter": 7,
+      "path": "apps/api/study_agent/infrastructure/checkpointer.py",
+      "start": 61,
+      "end": 80,
+      "excerpt_sha256": "a70ea6aceb57dd5a11f1f4dc26431b3a456382a9960da430236576cfb86eb740"
+    },
+    {
+      "chapter": 7,
+      "path": "apps/api/study_agent/application/tutoring.py",
+      "start": 42,
+      "end": 66,
+      "excerpt_sha256": "978716573b083349f287409d852717ad4bb2fbeb107b556014f70881cb83bd6c"
+    },
+    {
+      "chapter": 7,
+      "path": "apps/api/study_agent/infrastructure/tutoring.py",
+      "start": 28,
+      "end": 48,
+      "excerpt_sha256": "0d0438f8f024bfd211c868453126d25d3a73ac1e1e3f01fd0b106619f4cbefc1"
+    },
+    {
+      "chapter": 7,
+      "path": "apps/api/study_agent/application/tutoring.py",
+      "start": 345,
+      "end": 374,
+      "excerpt_sha256": "3f17e28cdea1d72db128d7427c457a862b07aa7006df32ed7715badc25560957"
+    },
+    {
+      "chapter": 7,
+      "path": "apps/api/study_agent/infrastructure/tutoring.py",
+      "start": 170,
+      "end": 195,
+      "excerpt_sha256": "fb0f4e270c41db7a909858baf4641b192727ca8888a3ef2c068990a7d1f55e60"
+    },
+    {
+      "chapter": 7,
+      "path": "apps/api/study_agent/application/study.py",
+      "start": 522,
+      "end": 552,
+      "excerpt_sha256": "399aa526e571dbdc49360d2eb6e1909d5060395389a1d705684c0448b7fa688e"
+    },
+    {
+      "chapter": 8,
+      "path": "apps/api/study_agent/application/study.py",
+      "start": 66,
+      "end": 95,
+      "excerpt_sha256": "56166241e88ede117de4279635866f609ceff0fbd37cba7d4e1b0f48f7582342"
+    },
+    {
+      "chapter": 8,
+      "path": "apps/api/study_agent/application/study.py",
+      "start": 324,
+      "end": 342,
+      "excerpt_sha256": "11e05291fc13ea146ab5abb34ff4e01b1520368d7c6a69a7817b5496329bb21c"
+    },
+    {
+      "chapter": 8,
+      "path": "apps/api/study_agent/application/study.py",
+      "start": 415,
+      "end": 434,
+      "excerpt_sha256": "9c8d14e2e93b419a7ade6c7302595f14e1872fe377b95fca5198fb8202b709f8"
+    },
+    {
+      "chapter": 8,
+      "path": "apps/api/study_agent/application/study.py",
+      "start": 437,
+      "end": 468,
+      "excerpt_sha256": "2a26f2874e276677b05dfeede0aec14c3e211c68c186bc5214a4823590db409e"
+    },
+    {
+      "chapter": 8,
+      "path": "apps/api/study_agent/application/adaptive_selection.py",
+      "start": 96,
+      "end": 116,
+      "excerpt_sha256": "d94eb6dd90c3596c637e27fa884b7a754c40f5c9590b8715a1a0ec7f9a3339a5"
+    },
+    {
+      "chapter": 8,
+      "path": "apps/api/study_agent/evaluation/metrics.py",
+      "start": 32,
+      "end": 57,
+      "excerpt_sha256": "1b046deeeab8f8a71711fdabd845fd0bc220ce478faa09cc837573a43f4fe21b"
+    },
+    {
+      "chapter": 8,
+      "path": "apps/api/study_agent/infrastructure/repositories.py",
+      "start": 917,
+      "end": 936,
+      "excerpt_sha256": "e9924364f98cfc8cd897e23c8167a082543ce1797d0b27906181d18688aaa08c"
+    }
+  ],
+  "screenshot_provenance": {
+    "home": {
+      "source": "当前真实项目页面 / 只读现有业务数据 / 2026-10-12",
+      "caption": "界面数字只代表截图时的可见记录；没有开始学习或提交出题。",
+      "image_sha256": "ae806d9c4c6e706854d0a0c6daa1c5ec35cfe3d89954c611b11b3a4e5d3e25af",
+      "occurrences": 2
+    },
+    "material-detail": {
+      "source": "真实 Vue 页面 / 隔离 HTTP fixture 教学数据 / 2026-10-09；非真实模型出题记录",
+      "caption": "固定教学完成态：目标 10、通过 10、拒绝 0；与已保存的合成验收数字同形，但本图不读取真实测试库",
+      "image_sha256": "9a63baff7713d31a9682f9b8cbbcd8d97ca821524e5f6077e1864a9ed05af3c4",
+      "occurrences": 2
+    },
+    "knowledge-bases": {
+      "source": "当前真实项目页面 / 只读现有业务数据 / 2026-10-12",
+      "caption": "界面数字只代表截图时的可见记录；没有开始学习或提交出题。",
+      "image_sha256": "719db0d3683570d1ee170d4d17dd28aa9a02ae36a97a3a69600db74092c6872c",
+      "occurrences": 1
+    },
+    "tutor-materials": {
+      "source": "历史项目截图 / 2026-10-07；用于说明原有界面流程",
+      "caption": "来自原教材对应页面；截图时的业务数量不代表当前状态",
+      "image_sha256": "a7bd9d1e1f2fb70b3afcd761b85b7bbf414187043614b591af7873f97416fcd6",
+      "occurrences": 2
+    },
+    "question-detail": {
+      "source": "真实 Vue 页面 / 隔离 HTTP fixture 教学数据 / 2026-10-09；非真实模型出题记录",
+      "caption": "新出题上下文与旧原文引文分别展开，包含标题、页码和标题路径",
+      "image_sha256": "b5dba0d0cdd69090fa6b39aca84cd7bd4b338e3578aaccc9c58543dcfe99e9e4",
+      "occurrences": 2
+    },
+    "questions": {
+      "source": "真实 Vue 页面 / 隔离 HTTP fixture 教学数据 / 2026-10-09；非真实模型出题记录",
+      "caption": "演示待审核题和两个来源类型；示例计数不作为质量指标",
+      "image_sha256": "3e026b67139e9c03f9d3b33e66aef85c42c9b4ffeea6082076208121ba96d035",
+      "occurrences": 2
+    },
+    "generation-settings": {
+      "source": "真实 Vue 页面 / 隔离 HTTP fixture 教学数据 / 2026-10-09；非真实模型出题记录",
+      "caption": "展示新的后端绑定、一轮补充说明；没有提交生成",
+      "image_sha256": "75b248e8b61f7096d48d9a3999459e6855b90fc740daaf2fec08ce4832f90fc1",
+      "occurrences": 1
+    },
+    "rejected-detail": {
+      "source": "真实 Vue 页面 / 隔离 HTTP fixture 教学数据 / 2026-10-09；非真实模型出题记录",
+      "caption": "当前基础拒绝示例：单选题 A 与 B 重复；候选未进入题库",
+      "image_sha256": "be928f504f094a03480d598477982e5162f105fe749f208dab68ceafb3fd4931",
+      "occurrences": 1
+    },
+    "study-answer": {
+      "source": "真实 Vue 页面 / 隔离 HTTP fixture 教学数据 / 2026-10-09",
+      "caption": "真实答后反馈界面，固定 TCP 教学数据模拟一次错误选择，展示确定性判分、理解差距、原文证据与继续请教入口；没有真实模型调用。",
+      "conditions": {
+        "viewport": "1100x850",
+        "deviceScaleFactor": 2,
+        "modelRequests": 0,
+        "realApiWrites": 0
+      },
+      "image_sha256": "8e01e5688cd5f0e8a7c820566f2e9408de6bac1c94a2abbc93eb31eb172c619f",
+      "occurrences": 2
+    },
+    "tutor-mistakes": {
+      "source": "真实 Vue 页面 / 隔离 HTTP fixture 教学数据 / 2026-10-09",
+      "caption": "真实近期错题辅导回答区，隔离 fixture 展示 TCP 错题解释和展开的资料引用；强调单次作答不能确定具体错因，未调用真实 Agent 或模型。",
+      "conditions": {
+        "viewport": "1100x850",
+        "deviceScaleFactor": 2,
+        "modelRequests": 0,
+        "realApiWrites": 0
+      },
+      "image_sha256": "960e036747ce8474ec5d348d7571699bc053b31aadb75d7f59299e4cfda8fdad",
+      "occurrences": 1
+    },
+    "tutor-history": {
+      "source": "历史项目截图 / 2026-10-07；用于说明原有界面流程",
+      "caption": "来自原教材对应页面；截图时的业务数量不代表当前状态",
+      "image_sha256": "1ca7b98bd811470095e50ccf37b55c3224fea6fde7aef099ac3bec7afde2e3ac",
+      "occurrences": 2
+    },
+    "progress": {
+      "source": "当前真实项目页面 / 只读现有业务数据 / 2026-10-12",
+      "caption": "界面数字只代表截图时的可见记录；没有开始学习或提交出题。",
+      "image_sha256": "3e2e712161ae5e90decb4696a021bd1d948e350bdaa02ba6ca2c609eb167dcae",
+      "occurrences": 2
+    },
+    "study-start": {
+      "source": "当前真实项目页面 / 只读现有业务数据 / 2026-10-12",
+      "caption": "界面数字只代表截图时的可见记录；没有开始学习或提交出题。",
+      "image_sha256": "5c128eaf7a2bdd7240c1b1bddd95047d23e2886e4720d1afabcd7d7c8d0f1961",
+      "occurrences": 1
+    },
+    "generation-progress": {
+      "source": "真实 Vue 页面 / 隔离 HTTP fixture 教学数据 / 2026-10-09；非真实模型出题记录",
+      "caption": "固定生成阶段 45%；展示阶段进度，不是已生成题数比例",
+      "image_sha256": "4fb4bc0504f6a8bab9c7146b257eb229012fbe30e6fad8ee7076464a7fb72846",
+      "occurrences": 1
+    },
+    "tutor-context": {
+      "source": "真实 Vue 页面 / 隔离 HTTP fixture 教学数据 / 2026-10-12",
+      "caption": "输入区局部截图：展示问题类型与已答题绑定的选项；不是实际 Agent 回答或模型验收。",
+      "image_sha256": "f3c7ce8e76123b5723eebb358faaa79a39b6f9096d3d217f7830e6f463ea33d6",
+      "occurrences": 1
+    }
+  },
+  "screenshot_capture_validation": {
+    "current_pages": {
+      "errors": [],
+      "requests": [
+        {
+          "key": "home",
+          "method": "GET",
+          "path": "/api/health/ready",
+          "source": "real-read-only"
+        },
+        {
+          "key": "home",
+          "method": "GET",
+          "path": "/api/knowledge-bases",
+          "source": "real-read-only"
+        },
+        {
+          "key": "home",
+          "method": "GET",
+          "path": "/api/reviews/due",
+          "source": "real-read-only"
+        },
+        {
+          "key": "home",
+          "method": "GET",
+          "path": "/api/mastery",
+          "source": "real-read-only"
+        },
+        {
+          "key": "home",
+          "method": "GET",
+          "path": "/api/questions",
+          "source": "real-read-only"
+        },
+        {
+          "key": "home",
+          "method": "GET",
+          "path": "/api/study/history",
+          "source": "real-read-only"
+        },
+        {
+          "key": "knowledge-bases",
+          "method": "GET",
+          "path": "/api/health/ready",
+          "source": "real-read-only"
+        },
+        {
+          "key": "knowledge-bases",
+          "method": "GET",
+          "path": "/api/knowledge-bases",
+          "source": "real-read-only"
+        },
+        {
+          "key": "knowledge-bases",
+          "method": "GET",
+          "path": "/api/knowledge-bases/306865d4-492a-4c39-8276-019c4fa70d45/materials",
+          "source": "real-read-only"
+        },
+        {
+          "key": "knowledge-bases",
+          "method": "GET",
+          "path": "/api/materials/a986b937-b8b5-42dc-8ab9-a4a873365a83/question-generation-jobs",
+          "source": "real-read-only"
+        },
+        {
+          "key": "progress",
+          "method": "GET",
+          "path": "/api/health/ready",
+          "source": "real-read-only"
+        },
+        {
+          "key": "progress",
+          "method": "GET",
+          "path": "/api/knowledge-bases",
+          "source": "real-read-only"
+        },
+        {
+          "key": "progress",
+          "method": "GET",
+          "path": "/api/mastery",
+          "source": "real-read-only"
+        },
+        {
+          "key": "progress",
+          "method": "GET",
+          "path": "/api/reviews/due",
+          "source": "real-read-only"
+        },
+        {
+          "key": "progress",
+          "method": "GET",
+          "path": "/api/study/history",
+          "source": "real-read-only"
+        },
+        {
+          "key": "study-start",
+          "method": "GET",
+          "path": "/api/health/ready",
+          "source": "real-read-only"
+        },
+        {
+          "key": "study-start",
+          "method": "GET",
+          "path": "/api/knowledge-bases",
+          "source": "real-read-only"
+        },
+        {
+          "key": "tutor-context",
+          "method": "GET",
+          "path": "/api/health/ready",
+          "source": "isolated-fixture"
+        },
+        {
+          "key": "tutor-context",
+          "method": "GET",
+          "path": "/api/knowledge-bases",
+          "source": "isolated-fixture"
+        },
+        {
+          "key": "tutor-context",
+          "method": "GET",
+          "path": "/api/tutor/conversations/teaching-conversation",
+          "source": "isolated-fixture"
+        },
+        {
+          "key": "tutor-context",
+          "method": "GET",
+          "path": "/api/tutor/conversations",
+          "source": "isolated-fixture"
+        },
+        {
+          "key": "tutor-context",
+          "method": "GET",
+          "path": "/api/health/ready",
+          "source": "isolated-fixture"
+        },
+        {
+          "key": "tutor-context",
+          "method": "GET",
+          "path": "/api/knowledge-bases",
+          "source": "isolated-fixture"
+        },
+        {
+          "key": "tutor-context",
+          "method": "GET",
+          "path": "/api/tutor/conversations/teaching-conversation",
+          "source": "isolated-fixture"
+        },
+        {
+          "key": "tutor-context",
+          "method": "GET",
+          "path": "/api/tutor/conversations",
+          "source": "isolated-fixture"
+        }
+      ],
+      "realApiWrites": 0,
+      "modelCalls": 0
+    },
+    "learning_fixture": {
+      "apiRequests": [
+        {
+          "method": "GET",
+          "path": "/api/health/ready",
+          "response": "isolated-fixture"
+        },
+        {
+          "method": "GET",
+          "path": "/api/knowledge-bases",
+          "response": "isolated-fixture"
+        },
+        {
+          "method": "POST",
+          "path": "/api/study/sessions",
+          "response": "isolated-fixture"
+        },
+        {
+          "method": "POST",
+          "path": "/api/study/sessions/tcp-study-1/answers",
+          "response": "isolated-fixture"
+        },
+        {
+          "method": "GET",
+          "path": "/api/health/ready",
+          "response": "isolated-fixture"
+        },
+        {
+          "method": "GET",
+          "path": "/api/knowledge-bases",
+          "response": "isolated-fixture"
+        },
+        {
+          "method": "GET",
+          "path": "/api/tutor/conversations",
+          "response": "isolated-fixture"
+        },
+        {
+          "method": "POST",
+          "path": "/api/tutor/conversations",
+          "response": "isolated-fixture"
+        },
+        {
+          "method": "GET",
+          "path": "/api/tutor/conversations",
+          "response": "isolated-fixture"
+        },
+        {
+          "method": "POST",
+          "path": "/api/tutor/conversations/tcp-tutor-1/messages",
+          "response": "isolated-fixture"
+        },
+        {
+          "method": "GET",
+          "path": "/api/tutor/conversations/tcp-tutor-1",
+          "response": "isolated-fixture"
+        }
+      ],
+      "blockedRequests": [],
+      "errors": [],
+      "realApiWrites": 0,
+      "modelRequests": 0
+    },
+    "learning_fixture_provenance": "2026-10-09 的既有隔离截图验证，本轮没有重跑；仅保留旧图用于教学。"
+  },
+  "targeted_tests": [
+    {
+      "command": ".venv/Scripts/python.exe -m pytest -m 'not integration' -o addopts= -q",
+      "cwd": "apps/api",
+      "passed": 153,
+      "deselected": 48
+    },
+    {
+      "command": ".venv/Scripts/python.exe -m pytest tests/test_deleted_library_progress_postgres.py -o addopts= -q",
+      "cwd": "apps/api",
+      "passed": 4,
+      "database": "study_agent_test_progress"
+    },
+    {
+      "command": "npm run test:e2e",
+      "cwd": "apps/web",
+      "passed": 41,
+      "skipped": 1
+    }
+  ],
+  "visual_review": {
+    "method": "全部页面 100 DPI 渲染后逐张联系页检查；关键代码、图注与边界页另行放大。",
+    "issues_found_and_fixed": [
+      "旧封面日期",
+      "历史资料描述的时间范围",
+      "上下文操作截图偏小",
+      "实操节表格跨页"
+    ],
+    "final_geometry_qa": [
+      {
+        "number": 0,
+        "pages_rendered": 6,
+        "geometry": []
+      },
+      {
+        "number": 1,
+        "pages_rendered": 14,
+        "geometry": []
+      },
+      {
+        "number": 2,
+        "pages_rendered": 15,
+        "geometry": []
+      },
+      {
+        "number": 3,
+        "pages_rendered": 19,
+        "geometry": []
+      },
+      {
+        "number": 4,
+        "pages_rendered": 20,
+        "geometry": []
+      },
+      {
+        "number": 5,
+        "pages_rendered": 20,
+        "geometry": []
+      },
+      {
+        "number": 6,
+        "pages_rendered": 14,
+        "geometry": []
+      },
+      {
+        "number": 7,
+        "pages_rendered": 17,
+        "geometry": []
+      },
+      {
+        "number": 8,
+        "pages_rendered": 20,
+        "geometry": []
+      }
+    ],
+    "text_checks": [
+      "逐页非空",
+      "无替换字符与空字符",
+      "无旧 build_generation_context 入口",
+      "无本机环境秘密值"
+    ],
+    "toc_and_font_checks": "各章书签页有效、内部目录链接存在、使用的 TrueType 字体已嵌入。"
+  },
+  "historical_pdf_report": {
+    "path": "evaluation/results/2026-10-07-PDF教材验证.json",
+    "sha256": "7537281c912a23174731611d5f968b94959da3d52b7f3bdce694874e6f3f40f3",
+    "preserved_unchanged": true
+  },
+  "external_model_calls_this_task": 0,
+  "screenshot_real_business_writes": 0,
+  "limits": [
+    "本轮没有调用真实供应商，教材截图不用于估计模型通过率",
+    "第 7 章实验打印既有 LangGraph 未注册类型未来兼容性提醒，断言通过，未更改生产检查点行为",
+    "知识点 / 复习接口仍返回当前范围全部记录，分页用于限制界面长度；历史接口在后端分页",
+    "当前辅导进度工具没有按某一轮诊断会话筛选的功能",
+    "分组原文输入仍是抽样，不能保证全文知识覆盖"
+  ],
+  "pending_project_changes": [
+    "掌握度与复习查询关联真实知识点名称",
+    "三个进度列表各自每页 5 条，顶部统计使用全部记录"
+  ],
+  "targeted_tests_provenance": "以上在本会话 2026-10-12 的进度代码修改阶段实际执行，相关代码随后未改。教材阶段再执行 15 个离线实验；最终推送另由 CI 验证。",
+  "previous_pdf_report": {
+    "path": "evaluation/results/2026-10-09-PDF教材更新验证.json",
+    "sha256": "be6db60f5a22cb4abd0e22c71dcb0a7e2f7e648d22e4bcc0f3c6111267a564a3",
+    "preserved_unchanged": true,
+    "previous_pdf_hashes_verified": 9
+  }
+}
