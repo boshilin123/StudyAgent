@@ -1,7 +1,7 @@
 """Production PostgreSQL resource. Schema setup is an explicit deployment command."""
 
 import asyncio
-from collections.abc import AsyncIterator
+from collections.abc import AsyncGenerator
 from contextlib import asynccontextmanager
 from typing import Any
 
@@ -26,7 +26,7 @@ def psycopg_connection_string(database_url: str) -> str:
 
 # 打开 PostgreSQL 检查点存储，让辅导图的状态可以跨请求恢复。
 @asynccontextmanager
-async def open_tutor_checkpointer(app: FastAPI) -> AsyncIterator[None]:
+async def open_tutor_checkpointer(app: FastAPI) -> AsyncGenerator[None, None]:
     settings = get_settings()
     app.state.tutor_checkpointer = None
     app.state.tutor_checkpoint_error = None

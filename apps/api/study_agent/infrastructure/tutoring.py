@@ -1,4 +1,4 @@
-from collections.abc import AsyncIterator, Sequence
+from collections.abc import AsyncGenerator, Sequence
 from contextlib import asynccontextmanager
 from datetime import UTC, datetime, timedelta
 from typing import Any
@@ -26,7 +26,7 @@ class TutorRepository:
 
     # 同一个辅导会话一次只执行一个请求，避免消息顺序和检查点互相覆盖。
     @asynccontextmanager
-    async def execution_lock(self, conversation_id: UUID) -> AsyncIterator[bool]:
+    async def execution_lock(self, conversation_id: UUID) -> AsyncGenerator[bool, None]:
         key = int.from_bytes(conversation_id.bytes[:8], "big", signed=True)
         try:
             connection = await self.engine.connect()

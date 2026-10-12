@@ -1,4 +1,4 @@
-from collections.abc import AsyncIterator
+from collections.abc import AsyncGenerator
 from contextlib import asynccontextmanager
 from secrets import compare_digest
 from uuid import uuid4
@@ -21,7 +21,7 @@ logger = structlog.get_logger(__name__)
 
 # 应用启动时打开辅导检查点连接，关闭时释放资源。
 @asynccontextmanager
-async def lifespan(app: FastAPI) -> AsyncIterator[None]:
+async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
     logger.info("application_started", environment=settings.app_env)
     async with open_tutor_checkpointer(app):
         yield
